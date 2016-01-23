@@ -7,7 +7,11 @@ enum CheckResult {
 }
 
 enum ParseResult {
-	PASS, FAIL, NO_PARSE, FAIL_PARSE
+	PASS, FAIL, NO_PARSE, FAIL_PARSE, NA
+}
+
+class CantParseException extends Exception {
+	
 }
 
 /*
@@ -1111,7 +1115,8 @@ public class LogParser {
 	/*
 	 * Generate trace Trees from trace string
 	 */
-	public ArrayList<TNode> processLog2(String strLog, StringBuilder[] sbIndex) {
+	public ArrayList<TNode> processLog2(String strLog, StringBuilder[] sbIndex)
+			throws CantParseException {
 		ArrayList<TNode> traceTrees = new ArrayList<TNode>();
 		for (int i = 0; i < sbIndex.length; i++) {
 			String[] idx = sbIndex[i].toString().split(",");
@@ -1119,7 +1124,12 @@ public class LogParser {
 				int start = Integer.parseInt(idx[j]);
 				int end = findEndBracket(strLog, start) + 1;
 				TNode root = new TNode();
-				genTree(root, strLog.substring(start, end));
+				try {
+					genTree(root, strLog.substring(start, end));
+				} catch (StringIndexOutOfBoundsException e) {
+					throw (new CantParseException());
+				}
+				
 				traceTrees.add(root);
 			}
 		}
@@ -1233,7 +1243,7 @@ public class LogParser {
 		origFile.renameTo(new File(destDirectory.getAbsoluteFile(), origFile.getName()));
 	}
 	
-	public boolean parseCase(Case c) {
+	public boolean parseCase(Case c) throws CantParseException {
 		String basedir = controller.getBaseDir();
 		StringBuilder relDir = new StringBuilder(basedir);
 		relDir.append("/").append(c.getCustomer()).append("/")
@@ -1255,7 +1265,7 @@ public class LogParser {
 		return result;
 	}
 	
-	public boolean reParseCase(Case caseToParse, boolean originalResult) {
+	public boolean reParseCase(Case caseToParse, boolean originalResult) throws CantParseException {
 		String basedir = controller.getBaseDir();
 		StringBuilder relDir = new StringBuilder(basedir);
 		relDir.append("/").append(caseToParse.getCustomer()).append("/")
@@ -1289,7 +1299,7 @@ public class LogParser {
 		return result;
 	}
 	
-	public boolean compareLog(File logFile, File resultFile) {
+	public boolean compareLog(File logFile, File resultFile) throws CantParseException {
 		/* Get the directory of log file */
 		boolean result;
 		BooleanClass hasSubscriptAt = new BooleanClass(false);
@@ -1314,7 +1324,9 @@ public class LogParser {
 		}
 		String strLog = processLog1(logFile, sbIndex, sbKeywords, hasSubscriptAt);
 
-		ArrayList<TNode> traceTrees = processLog2(strLog, sbIndex);
+		ArrayList<TNode> traceTrees;
+		
+		traceTrees = processLog2(strLog, sbIndex);		
 
 		result = compareLists(resultTrees, traceTrees, resultPrefix);
 		
@@ -1356,7 +1368,13 @@ public class LogParser {
 		LogParser lp = controller.getLogParser();
 		Case c = new Case("cx6702", "72400", "R27SU6", "VFI", "Function", "VFI");
 		//boolean result = lp.parseCase(c);
-		boolean result = lp.reParseCase(c, true);
+		boolean result = false;
+		try {
+			result = lp.reParseCase(c, true);
+		} catch (CantParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		System.out.println("result = " + result);
 
 	}

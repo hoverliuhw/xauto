@@ -574,7 +574,7 @@ public class XController {
 		host.sendCmd("LogCMB /tmp/" + caseToRun.getTID() + ".log");
 	}
 
-	public boolean parseLog(Case caseToParse, boolean originalResult) {
+	public boolean parseLog(Case caseToParse, boolean originalResult) throws CantParseException {
 		return logParser.reParseCase(caseToParse, originalResult);
 	}
 	/* This getCaseLog function has moved to LogProcesser*/

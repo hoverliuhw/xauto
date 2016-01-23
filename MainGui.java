@@ -743,12 +743,12 @@ public class MainGui {
 			origParseResult = false;
 		} 
 		
-		boolean newParseResult = controller.parseLog(caseToParse, origParseResult);
-		
-		if (newParseResult) {
-			result = "PASS";
-		} else {
-			result = "FAIL";
+		boolean newParseResult = false;
+		try {
+			newParseResult = controller.parseLog(caseToParse, origParseResult);
+			result = newParseResult ? "PASS" : "FAIL";
+		} catch (CantParseException e) {
+			result = "FAIL_PARSE";
 		}
 		
 		caseTable.setValueAt(result, row, CaseTableModel.COLUMN_RESULT);		
@@ -987,7 +987,7 @@ class CaseTableCellRenderer extends DefaultTableCellRenderer {
 			if (result.equals("FAIL")) {
 				setForeground(Color.RED);
 			}
-			if (result.equals("NO_PARSE")) {
+			if (result.equals("NO_PARSE") || result.equals("FAIL_PARSE")) {
 				setForeground(Color.ORANGE);
 			}
 		} else {

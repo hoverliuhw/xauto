@@ -77,10 +77,17 @@ public class LogProcesser implements Runnable {
 					"\n Case " + caseToProcess.getTID() + "is set to FAIL");
 			return;
 		} 
-		getCaseLog();		
-		boolean isPassed = logParser.parseCase(caseToProcess);
-		
-		String result = isPassed ? "PASS" : "FAIL";
+		getCaseLog();
+		boolean isPassed = false;
+		String result;
+		try {
+			isPassed = logParser.parseCase(caseToProcess);
+			result = isPassed ? "PASS" : "FAIL";
+		} catch (CantParseException e) {
+			System.out.println("Failed to parse log");
+			result = "FAIL_PARSE";
+		} 		
+		 
 		caseModel.setValueAt(result, row, CaseTableModel.COLUMN_RESULT);
 	}
 
