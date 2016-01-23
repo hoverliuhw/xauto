@@ -6,12 +6,8 @@ enum CheckResult {
 	EQUAL, NOTEQUAL, NOTFOUND
 }
 
-enum ParseResult {
-	PASS, FAIL, NO_PARSE, FAIL_PARSE, NA
-}
-
 class CantParseException extends Exception {
-	
+	// This Exception is for bracket missmatch issue, such as mapss7! message
 }
 
 /*

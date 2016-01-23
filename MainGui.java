@@ -369,7 +369,7 @@ public class MainGui {
 				}
 				
 				String result = (String) caseTable.getValueAt(row, col);
-				if (result.equals("NO_PARSE")) {
+				if (result.equals("NO_PARSE") || result.equals("FAIL_PARSE")) {
 					parseLog(row);
 					result = (String) caseTable.getValueAt(row, col);
 				}
@@ -472,7 +472,8 @@ public class MainGui {
 				if (col == CaseTableModel.COLUMN_RESULT 
 						&& (result.equals("PASS") 
 								|| result.equals("FAIL") 
-								|| result.equals("NO_PARSE"))) {
+								|| result.equals("NO_PARSE")
+								|| result.equals("FAIL_PARSE"))) {
 					mainPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 				} else if (col == CaseTableModel.COLUMN_TID){
 					mainPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -812,6 +813,10 @@ public class MainGui {
 		new MainGui();
 	}
 
+}
+
+enum ParseResult {
+	PASS, FAIL, NO_PARSE, FAIL_PARSE, NA
 }
 
 class CaseTableModel extends AbstractTableModel {

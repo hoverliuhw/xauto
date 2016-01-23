@@ -84,7 +84,7 @@ public class LogProcesser implements Runnable {
 			isPassed = logParser.parseCase(caseToProcess);
 			result = isPassed ? "PASS" : "FAIL";
 		} catch (CantParseException e) {
-			System.out.println("Failed to parse log");
+			controller.printLog("Failed to parse log\n");
 			result = "FAIL_PARSE";
 		} 		
 		 
