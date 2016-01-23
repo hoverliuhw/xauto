@@ -36,13 +36,13 @@ public class MainGui {
 	private JMenuItem menuSaveFile = null;
 
 	private JMenu menuConfig = null;
-	private JMenuItem menuSetBaseDir = null;
-	private JMenuItem menuSetLoadData = null;
+	private JMenuItem menuSetBaseDir = null;	
 	private JMenuItem menuHostMgr = null;
 	private JMenuItem menuMgtsMgr = null;
 	private JMenuItem menuLoadResult = null;
 	private JMenuItem menuClearResult = null;
-	private JMenuItem menuReparseLog = null;
+	private JCheckBoxMenuItem  menuSetLoadData = null;
+	private JCheckBoxMenuItem  menuReparseLog = null;
 
 	/**
 	 * main panel Left part is case run pane, Right part is information pane, to
@@ -119,8 +119,8 @@ public class MainGui {
 		menuMgtsMgr = new JMenuItem("MGTS Manager...");
 		menuLoadResult = new JMenuItem("Load Result From Disk");
 		menuClearResult = new JMenuItem("Clear Result in Table");
-		menuSetLoadData = new JMenuItem("LoadData :  " + controller.getLoadDataFlag());
-		menuReparseLog = new JMenuItem("Reparse Log :  " + controller.getReparseLogFlag());
+		menuSetLoadData = new JCheckBoxMenuItem ("Load Data", true);
+		menuReparseLog = new JCheckBoxMenuItem ("Reparse Log", false);
 		menuConfig.add(menuSetBaseDir);
 		menuConfig.add(menuHostMgr);
 		menuConfig.add(menuMgtsMgr);
@@ -192,7 +192,7 @@ public class MainGui {
 				clearResult();
 			}
 		});
-
+		/*
 		menuSetLoadData.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				controller.toggleFlagLoadData();
@@ -208,7 +208,7 @@ public class MainGui {
 						+ controller.getReparseLogFlag());
 			}
 		});
-
+		 */
 	}
 
 	private void initMainPane() {
@@ -363,8 +363,8 @@ public class MainGui {
 					showCaseInfo(row);
 					return;
 				}
-				
-				if (controller.getReparseLogFlag()) {
+
+				if (getReparseLogFlag()) {
 					parseLog(row);
 				}
 				
@@ -794,6 +794,14 @@ public class MainGui {
 		}
 		CaseTableModel tableModel = (CaseTableModel) caseTable.getModel();
 		tableModel.fireTableDataChanged();
+	}
+	
+	public boolean getLoadDataFlag() {
+		return menuSetLoadData.getState();
+	}
+	
+	public boolean getReparseLogFlag() {
+		return menuReparseLog.getState();
 	}
 
 	/**

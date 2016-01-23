@@ -21,8 +21,8 @@ public class XController {
 	public static final int DEFAULT_INTERVAL = 4;
 
 	private boolean flagRunning = false;
-	private boolean flagLoadData = false;
-	private boolean flagReparseLog = false;
+//	private boolean flagLoadData = false;
+//	private boolean flagReparseLog = false;
 
 	public static final String CEPEXEC = "/cs/sn/cr/cepexec";
 
@@ -33,8 +33,8 @@ public class XController {
 	public XController() {
 		display = "135.252.17.202:1.0";
 		flagRunning = false;
-		flagLoadData = true;
-		flagReparseLog = false;
+//		flagLoadData = true;
+//		flagReparseLog = false;
 		logParser = new LogParser(this);
 	}
 
@@ -873,7 +873,7 @@ public class XController {
 	public void setRunningFlag(boolean flag) {
 		flagRunning = flag;
 	}
-
+	/*
 	public void setFlagLoadData(boolean flag) {
 		flagLoadData = flag;
 	}
@@ -881,15 +881,23 @@ public class XController {
 	public void toggleFlagLoadData() {
 		flagLoadData = !flagLoadData;
 	}
-
+	*/
 	public boolean getLoadDataFlag() {
-		return flagLoadData;
+		if (gui == null) {
+			return false;
+		} 
+		
+		return gui.getLoadDataFlag();
 	}
 	
 	public boolean getReparseLogFlag() {
-		return flagReparseLog;
+		if (gui == null) {
+			return false;
+		}
+		
+		return gui.getReparseLogFlag();
 	}
-	
+	/*
 	public void setReparseLogFlag(boolean flag) {
 		flagReparseLog = flag;
 	}
@@ -897,7 +905,7 @@ public class XController {
 	public void toggleReparseLogFlag() {
 		flagReparseLog = !flagReparseLog;
 	}
-
+	*/
 	public void printLog(String str) {
 		if (gui == null) {
 			return;

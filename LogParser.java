@@ -6,6 +6,22 @@ enum CheckResult {
 	EQUAL, NOTEQUAL, NOTFOUND
 }
 
+enum ParseResult {
+	PASS, FAIL, NO_PARSE, FAIL_PARSE
+}
+
+/*
+ * BooleanClass is defined for "subscript at"
+ * because traditional Boolean class can't change value, 
+ */
+class BooleanClass {
+	public boolean flag;
+	
+	BooleanClass(boolean flag) {
+		this.flag = flag;
+	}
+}
+
 class TNode {
 	public String key;
 	public String value;
@@ -150,7 +166,6 @@ class RNode {
 }
 
 public class LogParser {
-	private boolean hasSubscriptAt;
 	private XController controller = null;
 	private static final Pattern objPattern = Pattern.compile("index=[0-9]\\s+[a-zA-Z_]+");
 
@@ -166,18 +181,6 @@ public class LogParser {
 		controller = c;
 	}
 	
-	public void setSubscriptAt() {
-		hasSubscriptAt = true;
-	}
-	
-	public void resetSubscriptAt() {
-		hasSubscriptAt = false;
-	}
-	
-	public boolean hasSubscriptAt() {
-		return hasSubscriptAt;
-	}
-
 	public int findEndBracket(String str, int start) {
 		int end = -1, left = 0, i = start;
 		char ch;
@@ -1051,7 +1054,7 @@ public class LogParser {
 	 * into a string
 	 */
 	public String processLog1(File logFile, StringBuilder[] sbIndex,
-			StringBuilder sbKeywords) {
+			StringBuilder sbKeywords, BooleanClass hasSubscriptAt) {
 		StringBuilder sbLog = new StringBuilder();
 		String[] keywords = sbKeywords.toString().split("\n");
 
@@ -1066,7 +1069,9 @@ public class LogParser {
 				}
 				
 				if (line.contains("subscript at")) {
-					this.setSubscriptAt();
+					if (hasSubscriptAt != null) {
+						hasSubscriptAt.flag = true;
+					}					
 					continue;
 				}
 
@@ -1287,6 +1292,7 @@ public class LogParser {
 	public boolean compareLog(File logFile, File resultFile) {
 		/* Get the directory of log file */
 		boolean result;
+		BooleanClass hasSubscriptAt = new BooleanClass(false);
 		String logDir = logFile.getParent();
 		String logName = logFile.getName();
 		String tid = logName.substring(0, logName.indexOf("."));
@@ -1306,13 +1312,13 @@ public class LogParser {
 		for (int i = 0; i < sbIndex.length; i++) {
 			sbIndex[i] = new StringBuilder("-1");
 		}
-		String strLog = processLog1(logFile, sbIndex, sbKeywords);
+		String strLog = processLog1(logFile, sbIndex, sbKeywords, hasSubscriptAt);
 
 		ArrayList<TNode> traceTrees = processLog2(strLog, sbIndex);
 
 		result = compareLists(resultTrees, traceTrees, resultPrefix);
 		
-		if (hasSubscriptAt) {
+		if (hasSubscriptAt.flag) {
 			result = false;
 		}
 
@@ -1323,7 +1329,7 @@ public class LogParser {
 					new BufferedWriter(
 							new FileWriter(parseResult)));
 			
-			if (hasSubscriptAt) {
+			if (hasSubscriptAt.flag) {
 				parseWriter.println("FAIL: \"subscript at\" exists in log\n");
 			}
 			
