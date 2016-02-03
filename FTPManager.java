@@ -103,7 +103,7 @@ public class FTPManager {
 
 	}
 
-	public void downloadCaseLog(Case c) {
+	public void downloadCaseLog(Case c) throws IOException {
 		StringBuilder sb = new StringBuilder();
 		sb.append(controller.getBaseDir());
 		// sb.append("D:\\Workspace\\XAuto");
@@ -118,24 +118,19 @@ public class FTPManager {
 
 		File localLogFile = new File(logPath.toString() + "/" + c.getTID()
 				+ ".log");
-
-		try {
-			boolean isDirChanged = ftp.changeWorkingDirectory(remoteDir);
-			if (isDirChanged) {
-				ftp.setControlEncoding("UTF8");
-				String remoteFileName = c.getTID() + ".log";
-				OutputStream out = new FileOutputStream(localLogFile);
-				ftp.setBufferSize(1024);
-				ftp.retrieveFile(remoteFileName, out);			
-				
-				out.flush();
-				out.close();
-				//ftp.deleteFile(remoteFileName);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
+		
+		boolean isDirChanged = ftp.changeWorkingDirectory(remoteDir);
+		if (isDirChanged) {
+			ftp.setControlEncoding("UTF8");
+			String remoteFileName = c.getTID() + ".log";
+			OutputStream out = new FileOutputStream(localLogFile);
+			ftp.setBufferSize(1024);
+			ftp.retrieveFile(remoteFileName, out);			
+			
+			out.flush();
+			out.close();
+			ftp.deleteFile(remoteFileName);
 		}
-
 	}
 
 	public void uploadFile(File file) {

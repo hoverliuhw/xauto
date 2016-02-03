@@ -95,11 +95,11 @@ public class CaseRunner implements Runnable {
 		int len = caseModel.getRowCount();
 		
 		for (int i = 0; i < len; i++) {
-			boolean selected = ((Boolean) caseModel.getValueAt(i, 0))
+			boolean selected = ((Boolean) caseModel.getValueAt(i, CaseTableModel.COLUMN_SELECTED))
 					.booleanValue();
 			if (selected) {
-				String result = (String) caseModel.getValueAt(i, 10);
-				if (result.equals("PASS")) {
+				ParseResult result = (ParseResult) caseModel.getValueAt(i, CaseTableModel.COLUMN_RESULT);
+				if (result == ParseResult.PASS) {
 					count++;
 				}
 			}
@@ -118,6 +118,7 @@ public class CaseRunner implements Runnable {
 
 		String preRelease = null;
 		String preCustomer = null;
+		String preCaseType = null;
 
 		boolean firstCase = true;
 		int len = caseModel.getRowCount();
@@ -155,6 +156,8 @@ public class CaseRunner implements Runnable {
 				String sqlDir = baseDir + "/" + customer + "/" + rel + "/spa_data/";
 				if (firstCase) {
 					rtdbManager.createInitDb();
+					Host host = controller.getHost();
+					host.changeDate("010109092033");
 					firstCase = false;
 				}
 				if (!firstCase || controller.getLoadDataFlag()) {						
@@ -167,6 +170,10 @@ public class CaseRunner implements Runnable {
 
 				preRelease = rel;
 				preCustomer = customer;
+			} else {
+				if (preCaseType != null && preCaseType.equals("Audit") && caseType.equals("Function") ) {
+					rtdbManager.loadAllDB(controller.getBaseDir() + "/" + customer + "/" + rel + "/rtdb_data/");
+				}
 			}
 
 			controller.printLog("+++++++ Start to run case " + tid + "+++++++\n");
@@ -176,8 +183,10 @@ public class CaseRunner implements Runnable {
 			if (caseType.equals("Audit")) {
 				controller.prepareAuditCase(caseToRun);
 			}
+			
 			//controller.runCase(caseToRun);
 			controller.newRunCase(caseToRun);
+			preCaseType = caseType;
 			totalRunCase++;
 			
 			LogProcesser processer = new LogProcesser(controller, caseToRun, row);

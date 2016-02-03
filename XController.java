@@ -580,7 +580,12 @@ public class XController {
 	/* This getCaseLog function has moved to LogProcesser*/
 	public void getCaseLog(Case caseToRun) {
 		ftpManager.connect();
-		ftpManager.downloadCaseLog(caseToRun);
+		try {
+			ftpManager.downloadCaseLog(caseToRun);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		ftpManager.disconnect();
 	}
 	

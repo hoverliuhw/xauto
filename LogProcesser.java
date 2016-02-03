@@ -45,7 +45,7 @@ public class LogProcesser implements Runnable {
 		//controller.combineLog(caseToProcess);
 	}
 	
-	public void getCaseLog() {
+	public void getCaseLog() throws IOException {
 		FTPManager ftpManager = controller.getFTPManager();
 		
 		ftpManager.connect();
@@ -68,24 +68,25 @@ public class LogProcesser implements Runnable {
 		CaseTableModel caseModel = (CaseTableModel) controller.gui.getCaseTable().getModel();
 		try {
 			combineLog();
+			getCaseLog();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			caseModel.setValueAt("FAIL", row, CaseTableModel.COLUMN_RESULT);
+			caseModel.setValueAt(ParseResult.NA, row, CaseTableModel.COLUMN_RESULT);
 			controller.showMessageDialog("ERROR: " + e.getMessage() +
 					"\n Fail to reach host to combine and download log" +
-					"\n Case " + caseToProcess.getTID() + "is set to FAIL");
+					"\n Case " + caseToProcess.getTID() + "is set to NA");
 			return;
-		} 
-		getCaseLog();
+		}
+		
 		boolean isPassed = false;
-		String result;
+		ParseResult result;
 		try {
 			isPassed = logParser.parseCase(caseToProcess);
-			result = isPassed ? "PASS" : "FAIL";
+			result = isPassed ? ParseResult.PASS : ParseResult.FAIL;
 		} catch (CantParseException e) {
 			controller.printLog("Failed to parse log\n");
-			result = "FAIL_PARSE";
+			result = ParseResult.FAIL_PARSE;
 		} 		
 		 
 		caseModel.setValueAt(result, row, CaseTableModel.COLUMN_RESULT);

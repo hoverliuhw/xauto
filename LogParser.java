@@ -168,6 +168,7 @@ class RNode {
 public class LogParser {
 	private XController controller = null;
 	private static final Pattern objPattern = Pattern.compile("index=[0-9]\\s+[a-zA-Z_]+");
+	private static final Pattern AMAPattern = Pattern.compile("AMA_[^_]+_Generation");
 
 	public LogParser(XController c) {
 		controller = c;
@@ -218,6 +219,11 @@ public class LogParser {
 		// Pattern p = Pattern.compile(reg);
 		Matcher m = objPattern.matcher(value);
 		
+		return m.matches();
+	}
+
+	public boolean isAMA(String trace) {
+		Matcher m = AMAPattern.matcher(trace);
 		return m.matches();
 	}
 
@@ -1057,6 +1063,15 @@ public class LogParser {
 			StringBuilder sbKeywords, BooleanClass hasSubscriptAt) {
 		StringBuilder sbLog = new StringBuilder();
 		String[] keywords = sbKeywords.toString().split("\n");
+		boolean hasAMA = false;
+		int AMAResultIndex = -1;
+		for (int i = 0; i < keywords.length; i++) {
+			if (isAMA(keywords[i])) {
+				hasAMA = true;
+				AMAResultIndex = i;
+				break;
+			}
+		}
 
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(logFile));
@@ -1081,6 +1096,19 @@ public class LogParser {
 					s = line.replaceFirst("   ", "");
 				} else {
 					s = line;
+				}
+
+				if (hasAMA) {
+					Matcher matchAMA = AMAPattern.matcher(s);
+					if (matchAMA.find()
+							&& (s.charAt(matchAMA.start() - 1) == ' ')
+							&& (s.charAt(matchAMA.end()) == '(')) {
+						int pos = matchAMA.start();
+						int index = sbLog.length() + pos;
+						sbIndex[AMAResultIndex].append(",").append(index);
+						sbLog.append(s);
+						continue;
+					}
 				}
 
 				for (int i = 0; i < keywords.length; i++) {
@@ -1153,6 +1181,8 @@ public class LogParser {
 						} else {
 							index++;
 						}
+					} else if (isAMA(rn.key) && isAMA(tn.key)) {
+						index++;
 					}
 				}
 				

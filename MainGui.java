@@ -39,10 +39,16 @@ public class MainGui {
 	private JMenuItem menuSetBaseDir = null;	
 	private JMenuItem menuHostMgr = null;
 	private JMenuItem menuMgtsMgr = null;
-	private JMenuItem menuLoadResult = null;
-	private JMenuItem menuClearResult = null;
 	private JCheckBoxMenuItem  menuSetLoadData = null;
 	private JCheckBoxMenuItem  menuReparseLog = null;
+	
+	private JMenu menuTools = null;
+	private JMenuItem menuLoadResult = null;
+	private JMenuItem menuClearResult = null;
+	private JMenuItem menuResultStatistics = null;
+	
+	private JMenu menuHelp = null;
+	private JMenuItem menuAboutXAuto = null;
 
 	/**
 	 * main panel Left part is case run pane, Right part is information pane, to
@@ -117,20 +123,30 @@ public class MainGui {
 		menuSetBaseDir = new JMenuItem("Set Base Directory...");		
 		menuHostMgr = new JMenuItem("Host Manager...");
 		menuMgtsMgr = new JMenuItem("MGTS Manager...");
-		menuLoadResult = new JMenuItem("Load Result From Disk");
-		menuClearResult = new JMenuItem("Clear Result in Table");
 		menuSetLoadData = new JCheckBoxMenuItem ("Load Data", true);
 		menuReparseLog = new JCheckBoxMenuItem ("Reparse Log", false);
+		
 		menuConfig.add(menuSetBaseDir);
 		menuConfig.add(menuHostMgr);
 		menuConfig.add(menuMgtsMgr);
 		menuConfig.addSeparator();
-		menuConfig.add(menuLoadResult);
-		menuConfig.add(menuClearResult);
-		menuConfig.addSeparator();
 		menuConfig.add(menuSetLoadData);
 		menuConfig.add(menuReparseLog);
 		menuBar.add(menuConfig);
+		
+		menuTools = new JMenu("Tools");
+		menuLoadResult = new JMenuItem("Load Result From Disk");
+		menuClearResult = new JMenuItem("Clear Result in Table");
+		menuResultStatistics = new JMenuItem("Result Statistics");
+		menuTools.add(menuLoadResult);
+		menuTools.add(menuClearResult);
+		menuTools.add(menuResultStatistics);
+		menuBar.add(menuTools);
+		
+		menuHelp = new JMenu("Help");
+		menuAboutXAuto = new JMenuItem("About XAuto");
+		menuHelp.add(menuAboutXAuto);
+		menuBar.add(menuHelp);
 
 		mainFrame.setJMenuBar(menuBar);
 
@@ -190,6 +206,18 @@ public class MainGui {
 					return;
 				}
 				clearResult();
+			}
+		});
+		
+		menuResultStatistics.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				getResultStatistics();
+			}
+		});
+		
+		menuAboutXAuto.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				showMessageDialog("XAuto version 0.1");
 			}
 		});
 		/*
@@ -368,13 +396,15 @@ public class MainGui {
 					parseLog(row);
 				}
 				
-				String result = (String) caseTable.getValueAt(row, col);
-				if (result.equals("NO_PARSE") || result.equals("FAIL_PARSE")) {
+				ParseResult result = (ParseResult) caseTable.getValueAt(row, col);
+				if (result == ParseResult.NO_PARSE
+						|| result == ParseResult.FAIL_PARSE) {
 					parseLog(row);
-					result = (String) caseTable.getValueAt(row, col);
+					result = (ParseResult) caseTable.getValueAt(row, col);
 				}
 				
-				if (!(result.equals("PASS") || result.equals("FAIL"))) {
+				if (!(result == ParseResult.PASS
+						|| result== ParseResult.FAIL)) {
 					return;
 				}
 				
@@ -385,7 +415,7 @@ public class MainGui {
 				String customer = (String) caseTable.getValueAt(row, CaseTableModel.COLUMN_CUSTOMER);
 
 				String parseResultName = null;
-				if (result.equals("PASS")) {
+				if (result== ParseResult.PASS) {
 					parseResultName = controller.getBaseDir() + "/" + customer 
 							+ "/" + rel + "/log/" + tid + ".PASS";
 				} else {
@@ -464,16 +494,16 @@ public class MainGui {
 			public void mouseMoved(MouseEvent e) {
 				int row = caseTable.rowAtPoint(e.getPoint());
 				int col = caseTable.columnAtPoint(e.getPoint());
-				String result = null;
+				ParseResult result = null;
 				if (col == CaseTableModel.COLUMN_RESULT) {
-					result = (String) caseTable.getValueAt(row, col);
+					result = (ParseResult) caseTable.getValueAt(row, col);
 				}
 								
 				if (col == CaseTableModel.COLUMN_RESULT 
-						&& (result.equals("PASS") 
-								|| result.equals("FAIL") 
-								|| result.equals("NO_PARSE")
-								|| result.equals("FAIL_PARSE"))) {
+						&& (result == ParseResult.PASS 
+								|| result == ParseResult.FAIL 
+								|| result == ParseResult.NO_PARSE
+								|| result == ParseResult.FAIL_PARSE)) {
 					mainPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 				} else if (col == CaseTableModel.COLUMN_TID){
 					mainPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -575,7 +605,7 @@ public class MainGui {
 
 		caseToAdd.add("Not Run");
 		caseToAdd.add("10s");
-		caseToAdd.add("NA");
+		caseToAdd.add(ParseResult.NA);
 
 		return caseToAdd;
 	}
@@ -732,24 +762,24 @@ public class MainGui {
 	
 	public void parseLog(int row) {
 		Case caseToParse = getCaseFromGui(row);
-		String result = (String) caseTable.getValueAt(row, CaseTableModel.COLUMN_RESULT);
-		if (result.equals("NA")) {
+		ParseResult result = (ParseResult) caseTable.getValueAt(row, CaseTableModel.COLUMN_RESULT);
+		if (result == ParseResult.NA) {
 			this.showMessageDialog("Log does not exist for case " +
 					caseTable.getValueAt(row, CaseTableModel.COLUMN_TID));
 			return;
 		}
 		
 		boolean origParseResult = true;
-		if (result.equals("FAIL")) {
+		if (result == ParseResult.FAIL) {
 			origParseResult = false;
 		} 
 		
 		boolean newParseResult = false;
 		try {
 			newParseResult = controller.parseLog(caseToParse, origParseResult);
-			result = newParseResult ? "PASS" : "FAIL";
+			result = newParseResult ? ParseResult.PASS : ParseResult.FAIL;
 		} catch (CantParseException e) {
-			result = "FAIL_PARSE";
+			result = ParseResult.FAIL_PARSE;
 		}
 		
 		caseTable.setValueAt(result, row, CaseTableModel.COLUMN_RESULT);		
@@ -762,23 +792,23 @@ public class MainGui {
 			String tid = (String) caseTable.getValueAt(row, CaseTableModel.COLUMN_TID);
 			String rel = (String) caseTable.getValueAt(row, CaseTableModel.COLUMN_RELEASE);
 			String customer = (String) caseTable.getValueAt(row, CaseTableModel.COLUMN_CUSTOMER);
-			String result = "NA";
+			ParseResult result = ParseResult.NA;
 			File successLog = new File(baseDir + "/" + customer
 					+ "/" + rel + "/log/" + tid + ".log");
 			if (successLog.exists()) {
 				File parseResultFile = new File(baseDir + "/" + customer
 						+ "/" + rel + "/log/" + tid + ".PASS");
 				if (parseResultFile.exists()) {
-					result = "PASS";
+					result = ParseResult.PASS;
 				} else {
-					result = "NO_PARSE";
+					result = ParseResult.NO_PARSE;
 				}
 				
 			} else {
 				File failLog = new File(baseDir + "/" + customer 
 						+ "/" + rel + "/faillog/" + tid + ".log");
 				if (failLog.exists()) {
-					result = "FAIL";
+					result = ParseResult.FAIL;
 				}
 			}
 			
@@ -788,13 +818,52 @@ public class MainGui {
 	
 	public void clearResult() {
 		int rowCount = caseTable.getRowCount();
-		String result = "NA";
+		ParseResult result = ParseResult.NA;
 		
 		for (int row = 0; row < rowCount; row++) {
 			caseTable.setValueAt(result, row, CaseTableModel.COLUMN_RESULT);
 		}
 		CaseTableModel tableModel = (CaseTableModel) caseTable.getModel();
 		tableModel.fireTableDataChanged();
+	}
+	
+	public void getResultStatistics() {
+		int rowCount = caseTable.getRowCount();
+		if (rowCount == 0) {
+			showMessageDialog("No case loaded on GUI");
+			return;
+		}
+		int passCount = 0;
+		int failCount = 0;
+		int otherCount = 0;
+		
+		ParseResult result = null;
+		for (int row = 0; row < rowCount; row++) {
+			result = (ParseResult) caseTable.getValueAt(row, CaseTableModel.COLUMN_RESULT);
+			switch (result) {
+			case PASS:
+				passCount++;
+				break;
+			case FAIL:
+				failCount++;
+				break;
+			default:
+				otherCount++;
+			}
+		}
+		
+		float passRate = (float) (Math.round(((float) passCount) / ((float) rowCount) * 10000)) / 10000;
+		StringBuilder report = new StringBuilder();
+		report.append("+++++++++++++++++ Case result statistics ++++++++++++++++++\n\n" +
+				"/****************************************/\n");
+		report.append(String.format(" * Total Cases: %20d %s", rowCount,"\n"));
+		report.append(String.format(" * Passed cases: %14d %s", passCount,"\n"));
+		report.append(String.format(" * Failed cases: %16d %s", failCount,"\n"));
+		report.append(String.format(" * Other result cases: %8d %s", otherCount,"\n"));
+		report.append(String.format(" * Pass Rate: %20.2f%s", passRate * 100,"%\n"));
+		report.append("/****************************************/\n");
+		
+		showMessageDialog(report.toString());
 	}
 	
 	public boolean getLoadDataFlag() {
@@ -985,14 +1054,14 @@ class CaseTableCellRenderer extends DefaultTableCellRenderer {
 		}
 		
 		if (column == CaseTableModel.COLUMN_RESULT) {
-			String result = (String) value;
-			if (result.equals("PASS")) {
+			ParseResult result = (ParseResult) value;
+			if (result == ParseResult.PASS) {
 				setForeground(Color.GREEN);
 			}
-			if (result.equals("FAIL")) {
+			if (result == ParseResult.FAIL) {
 				setForeground(Color.RED);
 			}
-			if (result.equals("NO_PARSE") || result.equals("FAIL_PARSE")) {
+			if (result == ParseResult.NO_PARSE || result == ParseResult.FAIL_PARSE) {
 				setForeground(Color.ORANGE);
 			}
 		} else {
