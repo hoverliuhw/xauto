@@ -42,7 +42,6 @@ public class LogProcesser implements Runnable {
 		shell.login();
 		shell.sendCmd("LogCMB /tmp/" + caseToProcess.getTID() + ".log");
 		shell.disconnect();
-		//controller.combineLog(caseToProcess);
 	}
 	
 	public void getCaseLog() throws IOException {

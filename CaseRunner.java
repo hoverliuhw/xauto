@@ -72,41 +72,56 @@ public class CaseRunner implements Runnable {
 	
 	public void printReport() {
 		long dura = (end - start) / 1000;
-		int pass = countPassCase();
-		int fail = totalRunCase - pass;
+		JTable caseTable = controller.getGui().getCaseTable();
+		int rowCount = caseTable.getRowCount();
+		int passCount = 0;
+		int failCount = 0;
+		int failParseCount = 0;
+		int otherCount = 0;
+		ParseResult result = null;
 		
+		for (int row = 0; row < rowCount; row++) {
+			boolean selected = ((Boolean) caseTable.getValueAt(row, CaseTableModel.COLUMN_SELECTED)).booleanValue();
+			if (!selected) {
+				continue;
+			}
+			
+			result = (ParseResult) caseTable.getValueAt(row, CaseTableModel.COLUMN_RESULT);
+			switch (result) {
+			case PASS:
+				passCount++;
+				break;
+			case FAIL:
+				failCount++;
+				break;
+			case FAIL_PARSE:
+				failParseCount++;
+				break;
+			default:
+				otherCount++;
+			}
+		}
+		
+		float passRate = 0;
+		if (totalRunCase > 0) {
+			passRate = (float) (Math.round(((float) passCount) / ((float) totalRunCase) * 10000)) / 10000;
+		}		
 		StringBuilder report = new StringBuilder();
 		report.append("+++++++++++++++++ All cases finished ++++++++++++++++++\n\n" +
 				"/****************************************/\n");
-		report.append(String.format(" * Cases run: %20d %s", totalRunCase,"\n"));
-		report.append(String.format(" * Passed cases: %14d %s", pass,"\n"));
-		report.append(String.format(" * Failed cases: %16d %s", fail,"\n"));
 		report.append(String.format(" * Used time: %20d %s", dura,"s\n"));
+		report.append(String.format(" * Cases run: %20d %s", totalRunCase,"\n"));
+		report.append(String.format(" * Passed cases: %14d %s", passCount,"\n"));
+		report.append(String.format(" * Failed cases: %16d %s", failCount,"\n"));
+		report.append(String.format(" * Fail to Parse cases: %7d %s", failParseCount,"\n"));
+		report.append(String.format(" * Other result cases: %8d %s", otherCount,"\n"));
+		report.append(String.format(" * Pass Rate: %20.2f%s", passRate * 100,"%\n"));
 		report.append("/****************************************/\n");
 		
 		controller.printLog(report.toString());
 		controller.showMessageDialog(report.toString());
 	}
 	
-	public int countPassCase() {
-		int count = 0;
-		CaseTableModel caseModel = (CaseTableModel) controller.gui
-				.getCaseTable().getModel();
-		int len = caseModel.getRowCount();
-		
-		for (int i = 0; i < len; i++) {
-			boolean selected = ((Boolean) caseModel.getValueAt(i, CaseTableModel.COLUMN_SELECTED))
-					.booleanValue();
-			if (selected) {
-				ParseResult result = (ParseResult) caseModel.getValueAt(i, CaseTableModel.COLUMN_RESULT);
-				if (result == ParseResult.PASS) {
-					count++;
-				}
-			}
-		}
-		return count;
-	}
-
 	public void run() {
 		setStartTime(System.currentTimeMillis());
 		

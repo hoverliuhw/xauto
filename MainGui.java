@@ -26,7 +26,6 @@ public class MainGui {
 	public static final String DEFAULT_DISPLAY = "135.252.17.202:1.0";
 
 	private XController controller = null;
-	//private String baseDir = null;
 
 	/** menu bar */
 	private JMenuBar menuBar = null;
@@ -48,6 +47,7 @@ public class MainGui {
 	private JMenuItem menuResultStatistics = null;
 	
 	private JMenu menuHelp = null;
+	private JMenuItem menuManual = null;
 	private JMenuItem menuAboutXAuto = null;
 
 	/**
@@ -144,7 +144,9 @@ public class MainGui {
 		menuBar.add(menuTools);
 		
 		menuHelp = new JMenu("Help");
-		menuAboutXAuto = new JMenuItem("About XAuto");
+		menuManual = new JMenuItem("Manual...");
+		menuAboutXAuto = new JMenuItem("About XAuto...");
+		menuHelp.add(menuManual);
 		menuHelp.add(menuAboutXAuto);
 		menuBar.add(menuHelp);
 
@@ -217,26 +219,13 @@ public class MainGui {
 		
 		menuAboutXAuto.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				showMessageDialog("XAuto version 0.1");
+				showMessageDialog("\nXAuto for Surepay Automation\n\n" +
+						"Version: 0.1\n" +
+						"Contact: Hong_Wei.hl.Liu@alcatel-lucent.com\n\n" +
+						"(c) Copyright XAuto contributors 2015, 2016.  All rights reserved.");
 			}
 		});
-		/*
-		menuSetLoadData.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				controller.toggleFlagLoadData();
-				menuSetLoadData.setText("LoadData :  "
-						+ controller.getLoadDataFlag());
-			}
-		});
-		
-		menuReparseLog.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				controller.toggleReparseLogFlag();
-				menuReparseLog.setText("Reparse Log :  "
-						+ controller.getReparseLogFlag());
-			}
-		});
-		 */
+
 	}
 
 	private void initMainPane() {
@@ -374,16 +363,16 @@ public class MainGui {
 		caseTable.getColumnModel().getColumn(0)
 				.setHeaderRenderer(new TableHeaderRenderer(caseTable));
 		caseTable.addMouseListener(new MouseAdapter() {
-			public void mouseClicked(MouseEvent e) {
-				if (controller.getBaseDir() == null) {
-					showMessageDialog("ERROR: Base directory has NOT been set,\n" +
-							"Please set base directory first!");
-					return;
-				}
-				
+			public void mouseClicked(MouseEvent e) {				
 				int row = caseTable.rowAtPoint(e.getPoint());
 				int col = caseTable.columnAtPoint(e.getPoint());
 				if ((col != CaseTableModel.COLUMN_RESULT) && (col != CaseTableModel.COLUMN_TID)) {
+					return;
+				}
+				
+				if (controller.getBaseDir() == null) {
+					showMessageDialog("ERROR: Base directory has NOT been set,\n" +
+							"Please set base directory first!");
 					return;
 				}
 				
@@ -570,7 +559,6 @@ public class MainGui {
 
 				caseToAdd = getCaseFromStr(line);
 				caseTableModel.addRow(caseToAdd);
-				// caseTableModel.fireTableDataChanged();
 			}
 
 			br.close();
@@ -652,21 +640,6 @@ public class MainGui {
 	}
 
 	public void setHost() {
-		/*
-		if (controller.getHost() == null) {
-			String hostname = "SPVM53";
-			String ip = "135.242.106.116";
-			int port = 23;
-			String username = "ainet";
-			String passwd = "ainet1";
-
-			Host host = new Host(hostname, ip, port, username, passwd);
-			controller.setHost(host);
-		} else {
-			printLog("host has been set to "
-					+ controller.getHost().getHostName() + "\n");
-		}
-		*/
 		File hostFile = new File(System.getProperty("user.home") + "/.sptest/host.xml");
 		if (hostFile.exists()) {
 			new HostManagerGui(controller);
@@ -678,25 +651,7 @@ public class MainGui {
 	}
 
 	public void setMgts() {
-		/*
-		if (controller.getMgts() == null) {
-			String hostname = "p250alu";
-			String ip = "135.252.170.143";
-			int port = 23;
-			String username = "yrli";
-			String passwd = "yrli";
-
-			MgtsHost mgts = new MgtsHost(hostname, ip, port, username, passwd);
-			mgts.setProtocol("ITU");
-			mgts.setShelfName("EE");
-			controller.setMgtsHost(mgts);
-		} else {
-			showMessageDialog("MGTS SERVER has been set to "
-					+ controller.getMgts().getHostName() + "\n");
-		}
-		*/
 		new MgtsManagerGui(controller);
-
 	}
 
 	public JTable getCaseTable() {
@@ -748,7 +703,7 @@ public class MainGui {
 		}
 		
 		caseInfoPane.setText(caseInfo.toString());
-		JDialog caseInfoWindow = new JDialog(mainFrame,tid + " information", true);
+		JDialog caseInfoWindow = new JDialog(mainFrame, tid + " information", true);
 		caseInfoWindow.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		caseInfoWindow.add(caseInfoPane);
 		caseInfoWindow.setSize(600, 400);
@@ -780,6 +735,8 @@ public class MainGui {
 			result = newParseResult ? ParseResult.PASS : ParseResult.FAIL;
 		} catch (CantParseException e) {
 			result = ParseResult.FAIL_PARSE;
+			showMessageDialog("Fail to parse " + caseToParse.getTID() + 
+					".log, it maybe because mismatch of brackets in trace.");
 		}
 		
 		caseTable.setValueAt(result, row, CaseTableModel.COLUMN_RESULT);		

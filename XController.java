@@ -21,8 +21,6 @@ public class XController {
 	public static final int DEFAULT_INTERVAL = 4;
 
 	private boolean flagRunning = false;
-//	private boolean flagLoadData = false;
-//	private boolean flagReparseLog = false;
 
 	public static final String CEPEXEC = "/cs/sn/cr/cepexec";
 
@@ -33,13 +31,15 @@ public class XController {
 	public XController() {
 		display = "135.252.17.202:1.0";
 		flagRunning = false;
-//		flagLoadData = true;
-//		flagReparseLog = false;
 		logParser = new LogParser(this);
 	}
 
 	public void setGui(MainGui gui) {
 		this.gui = gui;
+	}
+	
+	public MainGui getGui() {
+		return gui;
 	}
 
 	public void setBaseDir(String dir) {
@@ -122,8 +122,6 @@ public class XController {
 		
 		try {
 			this.mgts.login();
-			//this.mgts.goToDataDir();
-			//this.mgts.setPrompt("datafiles> ");
 			
 			if (oldMgts != null) {
 				oldMgts.disconnect();
@@ -150,43 +148,6 @@ public class XController {
 		gui.showMessageDialog(message);
 		printLog("Set MGTS SERVER " + mgts.getHostName() + "\n");
 	}
-	/* Moved to MGTS Host, start mgts in every case
-	public void startMgts() {
-		try {
-			mgts.login();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			//e.printStackTrace();
-			this.showMessageDialog("ERROR: Fail to connect MGTS server " + mgts.getHostName() +
-					"\nMessage: " + e.getMessage());
-			printLog("Failed to connect MGTS server " + mgts.getHostName());
-			mgts = null;
-			return;
-		}
-
-		String display = "135.252.17.202:1.0";
-		mgts.sendCmd("setenv DISPLAY " + display);
-		mgts.sendCmd("setenv MGTS_CLIENT /home/MGTS/17.1/MGTS");
-		mgts.sendCmd("setenv OS_TYPE Linux");
-		mgts.sendCmd("source /home/catapult/USERS/" + mgts.getUserName()
-				+ "/mgts_cit_csh");
-
-		mgts.sendCmd("/home/MGTS/17.1/MGTS/scripts/stop_mgts_script");
-		mgts.disconnectPassThru();
-		mgts.sendCmd("/home/MGTS/17.1/MGTS/bin/run_mgts_script");
-		mgts.connectShelf("EE");
-
-		mgts.connectPassThru(host.getIP());
-		mgts.goToDataDir();
-		
-		gui.setMgtsInfo("MGTS server " + mgts.getHostName() + "connected\n" +
-				"IP Address: " + mgts.getIP() + "\n" +
-				"Username: " + mgts.getUserName() +"\n" +
-				"Protocol: ITU\n" +
-				"Shelf Name: EE");
-		printLog("Set MGTS SERVER " + mgts.getHostName() + "\n");
-	}
-	*/
 	
 	public Case getCaseFromGui(int row) {
 		return gui.getCaseFromGui(row);
@@ -271,7 +232,9 @@ public class XController {
 		//host.sendCmd("rm /tmp/" + frmName);		
 	}
 	
-	/* It used to be boolean runCase(Case caseToRun)*/
+	/* It used to be boolean runCase(Case caseToRun)
+	 * this function has been replaced by newRunCase()
+	 * */
 	public void runCase(Case caseToRun) {
 		try {
 			String customer = caseToRun.getCustomer();
@@ -478,6 +441,9 @@ public class XController {
 		host.sendCmd("subshl -f " + tempBpFileName + " >/dev/null 2>&1");
 	}
 
+	/*
+	 * this function has been replaced by runState()
+	 */
 	public void runStateMachine(final String stateName) {
 		mgts.startMgts(host.getIP(), this.display);
 		
@@ -515,6 +481,10 @@ public class XController {
 	}
 	
 	public Thread runState(String stateName) {
+		if (mgts == null) {
+			printLog("MGTS host is NOT set\n");
+			return null;
+		}
 		mgts.startMgts(host.getIP(), this.display);
 		
 		String assignName = mgts.getSeqName(stateName);
@@ -538,7 +508,6 @@ public class XController {
 		String tid = caseToRun.getTID();
 		String str = null;
 		host.sendCmd("stty -echo");
-		//str = host.sendCmd("tailer de > /tmp/test.log 2>/dev/null &");
 		str = host.sendCmd("tailer de > /tmp/" + tid +".log 2>/dev/null &");
 		host.sendCmd("stty echo");
 		System.out.println(str);
@@ -577,17 +546,6 @@ public class XController {
 	public boolean parseLog(Case caseToParse, boolean originalResult) throws CantParseException {
 		return logParser.reParseCase(caseToParse, originalResult);
 	}
-	/* This getCaseLog function has moved to LogProcesser*/
-	public void getCaseLog(Case caseToRun) {
-		ftpManager.connect();
-		try {
-			ftpManager.downloadCaseLog(caseToRun);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		ftpManager.disconnect();
-	}
 	
 	public void newRunCase(Case caseToRun) {		
 			String customer = caseToRun.getCustomer();
@@ -605,8 +563,6 @@ public class XController {
 			if (!cmdFile.exists()) {
 				printLog("Run State Machine "
 						+ caseToRun.getTID() + "\n");
-				//runStateMachine(caseToRun.getTID());
-				//Thread.sleep(DEFAULT_INTERVAL * 1000);
 				stateRunner = runState(caseToRun.getTID());
 			} else {				
 				BufferedReader br;
@@ -754,7 +710,6 @@ public class XController {
 							}
 							printLog("send " + cmdType.toString() + " cmd: "
 									+ cmdStr + "\n");
-							//runStateMachine(cmdStr);
 							if (stateRunner != null && stateRunner.isAlive()) {
 								try {
 									stateRunner.join();
@@ -878,15 +833,7 @@ public class XController {
 	public void setRunningFlag(boolean flag) {
 		flagRunning = flag;
 	}
-	/*
-	public void setFlagLoadData(boolean flag) {
-		flagLoadData = flag;
-	}
 
-	public void toggleFlagLoadData() {
-		flagLoadData = !flagLoadData;
-	}
-	*/
 	public boolean getLoadDataFlag() {
 		if (gui == null) {
 			return false;
@@ -902,15 +849,7 @@ public class XController {
 		
 		return gui.getReparseLogFlag();
 	}
-	/*
-	public void setReparseLogFlag(boolean flag) {
-		flagReparseLog = flag;
-	}
-	
-	public void toggleReparseLogFlag() {
-		flagReparseLog = !flagReparseLog;
-	}
-	*/
+
 	public void printLog(String str) {
 		if (gui == null) {
 			return;

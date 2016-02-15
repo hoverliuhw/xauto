@@ -13,17 +13,6 @@ public class RTDBManager {
 
 	public RTDBManager() {
 		controller = null;
-
-		String hostname = "SPVM138A";
-		String ip = "135.242.17.41";
-		String username = "ainet";
-		String passwd = "ainet1";
-
-		Host host = new Host(hostname, ip, 23, username, passwd);
-		// host.login();
-		controller = new XController();
-		controller.setHost(host);
-		
 		initDbSet();
 	}
 

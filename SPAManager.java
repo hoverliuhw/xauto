@@ -53,7 +53,6 @@ public class SPAManager {
 		String sql = "SELECT version_name FROM SA_NAME_MAP"; 
 		String spaList = pgClient.getSqlResult(sql);
 		for (String spa : spaList.split("\n")) {
-			//System.out.println(spa);
 			dataSpaPool.add(spa);
 		}
 	}
@@ -96,7 +95,6 @@ public class SPAManager {
 		char resultCode = returnStr.charAt(0);
 		if (resultCode == '0') {
 			result = true;
-			//System.out.println("INSTALL:PROC " + spaName + " SUCCESS");
 			controller.printLog("INSTALL:PROC " + spaName + " SUCCESS\n");
 			host.sendCmd("/sn/cr/cepexec RST_SPA \"RST:SPA=" + spaName
 					+ "\";echo $?");
@@ -114,12 +112,8 @@ public class SPAManager {
 		while (it.hasNext()) {
 			String spaName = it.next();
 			startSpa(spaName);
-			//if (spaName.startsWith("EPAY") || spaName.startsWith("EPPSA")
-			//		|| spaName.startsWith("EPPSM")) {
-				//applyTrace(spaName);
-				applyTrace1(spaName);
-				applyBp(spaName);
-			//}
+			applyTrace1(spaName);
+			applyBp(spaName);
 		}
 		
 		clearStartSpaPool();
@@ -149,14 +143,14 @@ public class SPAManager {
 
 		for (String spaName : spaList) {
 			restartSpa(spaName);
-			//if (spaName.startsWith("EPAY") || spaName.startsWith("EPPSA")
-			//		|| spaName.startsWith("EPPSM")) {
-				applyTrace1(spaName);
-				applyBp(spaName);
-			//}
+			applyTrace1(spaName);
+			applyBp(spaName);
 		}
 	}
 
+	/*
+	 * replaced by applyTrace1()
+	 */
 	public void applyTrace(String spaName) {
 		Host host = controller.getHost();
 		

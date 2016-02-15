@@ -23,7 +23,6 @@ public class PgClient {
 			this.port = port;
 			Class.forName("org.postgresql.Driver").newInstance();
 			serverUrl = "jdbc:postgresql://" + this.ip + ":" + port + "/A?useUnicode=true&characterEncoding=sql_ascii";
-			// String url = "jdbc:postgresql://135.242.106.118:5333/A";
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -35,7 +34,6 @@ public class PgClient {
 			this.port = 5333;
 			Class.forName("org.postgresql.Driver").newInstance();
 			serverUrl = "jdbc:postgresql://" + this.ip + ":" + port + "/A?useUnicode=true&characterEncoding=sql_ascii";
-			// String url = "jdbc:postgresql://135.242.106.118:5333/A";
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

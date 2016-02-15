@@ -115,18 +115,14 @@ public class BaseHost {
 	}
 
 	public void login() throws SocketException, IOException {
-		//try {
-			telnet.connect(ip, port);
-			input = telnet.getInputStream();
-			output = new PrintStream(telnet.getOutputStream());
-			readUntil("login: ");
-			write(username);
-			readUntil("Password: ");
-			write(passwd);
-			readUntil(prompt);
-		//} catch (Exception e) {
-		//	e.printStackTrace();
-		//}
+		telnet.connect(ip, port);
+		input = telnet.getInputStream();
+		output = new PrintStream(telnet.getOutputStream());
+		readUntil("login: ");
+		write(username);
+		readUntil("Password: ");
+		write(passwd);
+		readUntil(prompt);
 	}
 
 	public String readUntil(String pattern) {

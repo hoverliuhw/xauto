@@ -167,8 +167,8 @@ class RNode {
 
 public class LogParser {
 	private XController controller = null;
-	private static final Pattern objPattern = Pattern.compile("index=[0-9]\\s+[a-zA-Z_]+");
-	private static final Pattern AMAPattern = Pattern.compile("AMA_[^_]+_Generation");
+	private static final Pattern OBJ_PATTERN = Pattern.compile("index=[0-9]\\s+[a-zA-Z_]+");
+	private static final Pattern AMA_PATTERN = Pattern.compile("AMA_[^_]+_Generation");
 
 	public LogParser(XController c) {
 		controller = c;
@@ -217,13 +217,13 @@ public class LogParser {
 		// Original string is "^index=[0-9]+  [z-zA-z_]+\("
 		// String reg = "index=1\\s+[a-zA-Z_]+";
 		// Pattern p = Pattern.compile(reg);
-		Matcher m = objPattern.matcher(value);
+		Matcher m = OBJ_PATTERN.matcher(value);
 		
 		return m.matches();
 	}
 
 	public boolean isAMA(String trace) {
-		Matcher m = AMAPattern.matcher(trace);
+		Matcher m = AMA_PATTERN.matcher(trace);
 		return m.matches();
 	}
 
@@ -1099,7 +1099,7 @@ public class LogParser {
 				}
 
 				if (hasAMA) {
-					Matcher matchAMA = AMAPattern.matcher(s);
+					Matcher matchAMA = AMA_PATTERN.matcher(s);
 					if (matchAMA.find()
 							&& (s.charAt(matchAMA.start() - 1) == ' ')
 							&& (s.charAt(matchAMA.end()) == '(')) {
@@ -1334,7 +1334,7 @@ public class LogParser {
 		String tid = logName.substring(0, logName.indexOf("."));
 
 		if (!(resultFile.exists() && logFile.exists())) {
-			return false;
+			throw (new CantParseException());
 		}
 
 		StringBuilder sbResultPrefix = new StringBuilder();
