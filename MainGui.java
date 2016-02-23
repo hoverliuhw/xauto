@@ -21,8 +21,8 @@ import java.util.regex.Pattern;
 
 public class MainGui {
 
-	public static final int WIDTH = 1000;
-	public static final int HEIGHT = 600;
+	public static final int WIDTH = 1024;
+	public static final int HEIGHT = 640;
 	public static final String DEFAULT_DISPLAY = "135.252.17.202:1.0";
 
 	private XController controller = null;
@@ -33,6 +33,7 @@ public class MainGui {
 	private JMenu menuFile = null;
 	private JMenuItem menuOpenFile = null;
 	private JMenuItem menuSaveFile = null;
+	private JMenuItem menuExit = null;
 
 	private JMenu menuConfig = null;
 	private JMenuItem menuSetBaseDir = null;	
@@ -115,8 +116,10 @@ public class MainGui {
 		menuFile = new JMenu("File");
 		menuOpenFile = new JMenuItem("Open");
 		menuSaveFile = new JMenuItem("Save");
+		menuExit = new JMenuItem("Exit");
 		menuFile.add(menuOpenFile);
 		menuFile.add(menuSaveFile);
+		menuFile.add(menuExit);
 		menuBar.add(menuFile);
 
 		menuConfig = new JMenu("Configuration");
@@ -152,6 +155,11 @@ public class MainGui {
 
 		mainFrame.setJMenuBar(menuBar);
 
+		menuExit.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				mainFrame.dispose();
+			}
+		});
 		menuSetBaseDir.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (controller.isRunning()) {
@@ -386,6 +394,20 @@ public class MainGui {
 				}
 				
 				ParseResult result = (ParseResult) caseTable.getValueAt(row, col);
+				if (result == ParseResult.FAIL_GETLOG) {
+					String tid = (String) caseTable.getValueAt(row, CaseTableModel.COLUMN_TID);
+					String rel = (String) caseTable.getValueAt(row, CaseTableModel.COLUMN_RELEASE);
+					String customer = (String) caseTable.getValueAt(row, CaseTableModel.COLUMN_CUSTOMER);
+					String logFileName = controller.getBaseDir() + "/" + customer 
+							+ "/" + rel + "/log/" + tid + ".log";
+					File logFile = new File(logFileName);
+					if (logFile.exists()) {
+						result = ParseResult.NO_PARSE;
+					} else {
+						caseTable.setValueAt(ParseResult.NA, row, CaseTableModel.COLUMN_RESULT);
+						showMessageDialog(logFile.getAbsolutePath() + " NOT exist\n");
+					}
+				}
 				if (result == ParseResult.NO_PARSE
 						|| result == ParseResult.FAIL_PARSE) {
 					parseLog(row);
@@ -468,8 +490,8 @@ public class MainGui {
 				resultWindow.add(resultPane);
 				resultWindow.setSize(600, 400);
 				Dimension screensize = Toolkit.getDefaultToolkit().getScreenSize(); 
-				int x = (int) screensize.getWidth() / 2 - 600 / 2;
-				int y = (int) screensize.getHeight() / 2 - 400 / 2;
+				int x = (int) screensize.getWidth() / 2 - resultWindow.getWidth() / 2;
+				int y = (int) screensize.getHeight() / 2 - resultWindow.getHeight() / 2;
 				resultWindow.setLocation(x, y);
 				resultWindow.setVisible(true);
 			}
@@ -489,10 +511,7 @@ public class MainGui {
 				}
 								
 				if (col == CaseTableModel.COLUMN_RESULT 
-						&& (result == ParseResult.PASS 
-								|| result == ParseResult.FAIL 
-								|| result == ParseResult.NO_PARSE
-								|| result == ParseResult.FAIL_PARSE)) {
+						&& result != ParseResult.NA) {
 					mainPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 				} else if (col == CaseTableModel.COLUMN_TID){
 					mainPane.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -842,7 +861,7 @@ public class MainGui {
 }
 
 enum ParseResult {
-	PASS, FAIL, NO_PARSE, FAIL_PARSE, NA
+	PASS, FAIL, NO_PARSE, FAIL_PARSE, FAIL_GETLOG, NA
 }
 
 class CaseTableModel extends AbstractTableModel {
@@ -1018,7 +1037,9 @@ class CaseTableCellRenderer extends DefaultTableCellRenderer {
 			if (result == ParseResult.FAIL) {
 				setForeground(Color.RED);
 			}
-			if (result == ParseResult.NO_PARSE || result == ParseResult.FAIL_PARSE) {
+			if (result == ParseResult.NO_PARSE
+					|| result == ParseResult.FAIL_PARSE
+					|| result == ParseResult.FAIL_GETLOG) {
 				setForeground(Color.ORANGE);
 			}
 		} else {

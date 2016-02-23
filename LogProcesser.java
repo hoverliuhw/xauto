@@ -71,10 +71,10 @@ public class LogProcesser implements Runnable {
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			caseModel.setValueAt(ParseResult.NA, row, CaseTableModel.COLUMN_RESULT);
-			controller.showMessageDialog("ERROR: " + e.getMessage() +
-					"\n Fail to reach host to combine and download log" +
-					"\n Case " + caseToProcess.getTID() + "is set to NA");
+			caseModel.setValueAt(ParseResult.FAIL_GETLOG, row, CaseTableModel.COLUMN_RESULT);
+			controller.printLog("Failed to reach host to combine and download " +
+					caseToProcess.getTID() + ".log\n" +
+					"Error message: " + e.getMessage());
 			return;
 		}
 		
@@ -84,7 +84,7 @@ public class LogProcesser implements Runnable {
 			isPassed = logParser.parseCase(caseToProcess);
 			result = isPassed ? ParseResult.PASS : ParseResult.FAIL;
 		} catch (CantParseException e) {
-			controller.printLog("Failed to parse log\n");
+			controller.printLog("Failed to parse "+ caseToProcess.getTID() + ".log\n");
 			result = ParseResult.FAIL_PARSE;
 		} 		
 		 

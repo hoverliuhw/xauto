@@ -132,7 +132,8 @@ public class MgtsHost extends BaseHost {
 	}
 
 	public String connectPassThru(String ipAddr) {
-		return sendCmd("/home/yrli/vmware/passThru -mgtshost p250alu " + ipAddr
+		//return sendCmd("/home/yrli/vmware/passThru -mgtshost p250alu " + ipAddr
+		return sendCmd("/home/auto/bin/passThru -mgtshost " + this.getHostName() + " " + ipAddr
 				+ " -debug >/dev/null &");
 	}
 

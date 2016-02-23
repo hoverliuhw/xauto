@@ -744,7 +744,6 @@ public class XController {
 							sleep = DEFAULT_INTERVAL;
 						}
 					}
-					System.out.println("sleep: " + sleep);
 					try {
 						Thread.sleep(sleep * 1000);
 					} catch (InterruptedException e) {

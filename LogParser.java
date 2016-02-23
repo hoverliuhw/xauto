@@ -1286,6 +1286,19 @@ public class LogParser {
 			String parseResult = relDir.toString() + "/log/" + c.getTID() + ".FAIL";
 			moveToDir(lFile.getAbsolutePath(), faillogDir);
 			moveToDir(parseResult, faillogDir);
+			File previousPassResult = new File(relDir.toString() + "/log/" + c.getTID() + ".PASS");
+			if (previousPassResult.exists()) {
+				previousPassResult.delete();
+			}
+		} else {
+			File previousFaillog = new File(relDir.toString() + "/faillog/" + c.getTID() + ".log");
+			File previousFailResult = new File(relDir.toString() + "/faillog/" + c.getTID() + ".FAIL");
+			if (previousFaillog.exists()) {
+				previousFaillog.delete();
+			}
+			if (previousFailResult.exists()) {
+				previousFailResult.delete();
+			}
 		}
 		
 		return result;
@@ -1302,8 +1315,6 @@ public class LogParser {
 		
 		File rFile = new File(resultFile);
 		File lFile = new File(logFile);
-		//System.out.println("result file: " + rFile.getAbsolutePath());
-		//System.out.println("log file: " + lFile.getAbsolutePath());
 		
 		boolean result = compareLog(lFile, rFile);
 		if (result != originalResult) {
