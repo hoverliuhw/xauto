@@ -144,8 +144,11 @@ public class CaseRunner implements Runnable {
 		controller.printLog("+++++++++++++++++ Start to run case +++++++++++++++++\n");
 		controller.printLog("Collecting cases from GUI...\n");
 		for (int row = 0; row < len; row++) {
-			if (!controller.isRunning()) {
-				controller.printLog("!!! Stop running cases !!!\n");
+			//if (!controller.isRunning()) {
+			if (controller.isStopClicked()) {
+				//controller.printLog("!!! Stop running cases !!!\n");
+				controller.setRunningFlag(false);
+				controller.setStopClicked(false);
 				break;
 			}
 
@@ -175,13 +178,25 @@ public class CaseRunner implements Runnable {
 					host.changeDate("010109092033");
 					firstCase = false;
 				}
-				if (!firstCase || controller.getLoadDataFlag()) {						
+				long startSpaTime = 0;
+				if (!firstCase || controller.getLoadDataFlag()) {
 					spaManager.stopAllSpa();
 					spaManager.loadAllSpaSql(sqlDir);
-					spaManager.startSpaInPool();
+					startSpaTime = System.currentTimeMillis();
+					spaManager.startSpaInPool();					
 				}				
 		
 				rtdbManager.loadAllDB(dbDataDir);
+				long endSpaTime = System.currentTimeMillis();
+				long dura = (endSpaTime - startSpaTime) / 1000;
+				if (dura < 360) {
+					try {
+						Thread.sleep((360 - dura) * 1000);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
 
 				preRelease = rel;
 				preCustomer = customer;

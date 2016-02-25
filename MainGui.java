@@ -314,7 +314,11 @@ public class MainGui {
 		
 		stopBtn.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				controller.setRunningFlag(false);
+				//controller.setRunningFlag(false);
+				if (controller.isRunning() && !controller.isStopClicked()) {
+					controller.setStopClicked(true);
+					printLog("Stop running after finishing current case\n");
+				}
 			}
 		});
 

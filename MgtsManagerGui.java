@@ -123,8 +123,9 @@ public class MgtsManagerGui {
 				MgtsHost mgts = new MgtsHost(hostname, ip, port, username, passwd);
 				mgts.setProtocol((String) protocolList.getSelectedItem());
 				mgts.setShelfName(shelfTextField.getText());
-				controller.setMgtsHost(mgts);
+				mgts.setDisplay(displayTextField.getText());
 				controller.setDisplay(displayTextField.getText());
+				controller.setMgtsHost(mgts);				
 				mainWindow.dispose();
 			}
 		});

@@ -7,6 +7,7 @@ public class MgtsHost extends BaseHost {
 	private String dataDir = null;
 	private String protocol = null;
 	private String shelfName = null;
+	private String display = DEFAULT_DISPLAY;
 
 	public MgtsHost(String name, String ip, int port, String username,
 			String passwd) {
@@ -159,6 +160,14 @@ public class MgtsHost extends BaseHost {
 	
 	public void setShelfName(String shelfName) {
 		this.shelfName = shelfName;
+	}
+	
+	public void setDisplay(String display) {
+		this.display = display;
+	}
+	
+	public String getDisplay() {
+		return display;
 	}
 	
 	public static void main(String[] args) {

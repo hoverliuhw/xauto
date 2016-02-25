@@ -21,6 +21,7 @@ public class XController {
 	public static final int DEFAULT_INTERVAL = 4;
 
 	private boolean flagRunning = false;
+	private boolean stopClicked = false;
 
 	public static final String CEPEXEC = "/cs/sn/cr/cepexec";
 
@@ -143,7 +144,8 @@ public class XController {
 				"\n*IP Address: " + mgts.getIP() +
 				"\n*Username: " + mgts.getUserName() +
 				"\n*Protocol: " + mgts.getProtocol() +
-				"\n*Shelf Name: " + mgts.getShelfName();
+				"\n*Shelf Name: " + mgts.getShelfName() +
+				"\n*Display: " + mgts.getDisplay();
 		gui.setMgtsInfo(message);
 		gui.showMessageDialog(message);
 		printLog("Set MGTS SERVER " + mgts.getHostName() + "\n");
@@ -847,6 +849,14 @@ public class XController {
 		}
 		
 		return gui.getReparseLogFlag();
+	}
+	
+	public boolean isStopClicked() {
+		return stopClicked;
+	}
+	
+	public void setStopClicked(boolean stopClicked) {
+		this.stopClicked = stopClicked;
 	}
 
 	public void printLog(String str) {
