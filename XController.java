@@ -147,7 +147,7 @@ public class XController {
 				"\n*Shelf Name: " + mgts.getShelfName() +
 				"\n*Display: " + mgts.getDisplay();
 		gui.setMgtsInfo(message);
-		gui.showMessageDialog(message);
+		//gui.showMessageDialog(message);
 		printLog("Set MGTS SERVER " + mgts.getHostName() + "\n");
 	}
 	

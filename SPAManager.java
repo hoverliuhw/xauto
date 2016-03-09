@@ -1,13 +1,15 @@
 import java.io.*;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 public class SPAManager {
 	private XController controller;
 	private Set<String> dataSpaPool;
-	private Set<String> startSpaPool;
+	private List<String> startSpaPool;
 
 	public SPAManager() {
 		controller = null;
@@ -25,7 +27,7 @@ public class SPAManager {
 		controller = c;
 		dataSpaPool = new HashSet<String>();
 		initDataSpaPool();
-		startSpaPool = new LinkedHashSet<String>();
+		startSpaPool = new ArrayList<String>();
 	}
 
 	public void setController(XController c) {
@@ -36,7 +38,7 @@ public class SPAManager {
 		return dataSpaPool;
 	}
 	
-	public Set<String> getStartSpaPool() {
+	public List<String> getStartSpaPool() {
 		return startSpaPool;
 	}
 	
@@ -109,6 +111,8 @@ public class SPAManager {
 	
 	public void startSpaInPool() {
 		Iterator<String> it = startSpaPool.iterator();
+	
+		it = startSpaPool.iterator();
 		while (it.hasNext()) {
 			String spaName = it.next();
 			startSpa(spaName);
@@ -340,7 +344,11 @@ public class SPAManager {
 				pgClient.loadSql(sqlFile);
 				
 				if (isSvcSpa(spaName)) {
-					startSpaPool.add(spaName);
+					if (spaName.startsWith("EPAY")) {
+						startSpaPool.add(0, spaName);
+					} else {
+						startSpaPool.add(spaName);
+					}					
 				}
 			}
 		}

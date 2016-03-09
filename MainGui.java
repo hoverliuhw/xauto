@@ -19,6 +19,215 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+enum ParseResult {
+	PASS, FAIL, NO_PARSE, FAIL_PARSE, FAIL_GETLOG, NA
+}
+
+class CaseTableModel extends AbstractTableModel {
+	public static final int COLUMN_SELECTED = 0;
+	public static final int COLUMN_NO = 1;
+	public static final int COLUMN_TID = 2;
+	public static final int COLUMN_FEATURE_ID = 3;
+	public static final int COLUMN_RELEASE = 4;
+	public static final int COLUMN_CUSTOMER = 5;
+	public static final int COLUMN_CASE_TYPE = 6;
+	public static final int COLUMN_BASE_DATA = 7;
+	public static final int COLUMN_STATUS = 8;
+	public static final int COLUMN_TIME_USED = 9;
+	public static final int COLUMN_RESULT = 10;
+
+	Object[] colNameSource = { "", "No.", "Tid", "Fid", "Release", "Customer",
+			"CaseType", "BaseData", "Status", "Time Used", "Result" };
+	Vector<Object> colName = new Vector<Object>();
+	Vector<Object> data;
+
+	public CaseTableModel() {
+		data = new Vector<Object>();
+
+		for (int i = 0; i < colNameSource.length; i++) {
+			colName.add(colNameSource[i]);
+		}
+
+	}
+
+	public int getColumnCount() {
+		return colName.size();
+	}
+
+	public int getRowCount() {
+		return data.size();
+	}
+
+	public Object getValueAt(int row, int col) {
+		return ((Vector<Object>) data.get(row)).get(col);
+	}
+
+	public Class<?> getColumnClass(int col) {
+		return getValueAt(0, col).getClass();
+	}
+
+	public String getColumnName(int column) {
+		if (column == CaseTableModel.COLUMN_SELECTED) {
+			return "Select All";
+		}
+
+		return colName.get(column).toString();
+	}
+
+	public void setValueAt(Object value, int row, int col) {
+		((Vector<Object>) data.get(row)).set(col, value);
+		fireTableCellUpdated(row, col);
+	}
+
+	public boolean isCellEditable(int row, int col) {
+
+		if (col == CaseTableModel.COLUMN_SELECTED) {
+			return true;
+		}
+
+		return false;
+	}
+
+	public void selectAll(boolean selected) {
+		int len = getRowCount();
+		for (int i = 0; i < len; i++) {
+			setValueAt(Boolean.valueOf(selected), i, CaseTableModel.COLUMN_SELECTED);
+		}
+	}
+
+	public void addRow(Vector<Object> rowToAdd) {
+		if (rowToAdd.size() == colName.size()) {
+			data.add(rowToAdd);
+			fireTableDataChanged();
+		} else {
+			System.out
+					.println("invalid row to add: number of column doesnt match!");
+		}
+	}
+
+	public void removeRow(int row) {
+		if (row >= 0 && row < getRowCount()) {
+			data.remove(row);
+			fireTableDataChanged();
+		}
+	}
+}
+
+class SelectAllTableHeaderRenderer implements TableCellRenderer {
+	JCheckBox selectAll;
+	JTableHeader tableHeader;
+	CaseTableModel tableModel;
+
+	public SelectAllTableHeaderRenderer(JTable table) {
+		selectAll = new JCheckBox();
+		this.tableHeader = table.getTableHeader();
+		tableModel = (CaseTableModel) table.getModel();
+
+		table.getTableHeader().addMouseListener(new MouseAdapter() {
+			public void mouseClicked(MouseEvent e) {
+				int column = tableHeader.columnAtPoint(e.getPoint());
+				if (column == CaseTableModel.COLUMN_SELECTED) {
+					boolean selected = !selectAll.isSelected();
+					selectAll.setSelected(selected);
+					tableHeader.repaint();
+					tableModel.selectAll(selected);
+				}
+			}
+		});
+		table.getColumnModel().getColumn(CaseTableModel.COLUMN_SELECTED)
+				.setPreferredWidth(selectAll.getWidth());
+	}
+
+	public Component getTableCellRendererComponent(JTable table, Object value,
+			boolean isSelected, boolean hasFocus, int row, int column) {
+		JComponent component;
+
+		if (column == CaseTableModel.COLUMN_SELECTED) {
+			component = selectAll;
+			selectAll.setHorizontalAlignment(SwingConstants.CENTER);
+		} else {
+			component = (JLabel) value;
+		}
+
+		return component;
+	}
+
+}
+
+class GeneralTableHeaderRenderer implements TableCellRenderer {
+	DefaultTableCellRenderer renderer;
+	
+	GeneralTableHeaderRenderer(JTable caseTable) {
+		renderer = (DefaultTableCellRenderer) 
+				caseTable.getTableHeader().getDefaultRenderer();
+		renderer.setHorizontalAlignment(JLabel.CENTER);		
+	}
+	
+	public Component getTableCellRendererComponent(
+	        JTable table, Object value, boolean isSelected,
+	        boolean hasFocus, int row, int col) {
+		return renderer.getTableCellRendererComponent(
+	            table, value, isSelected, hasFocus, row, col);
+	}     
+}
+
+class CaseTableCellRenderer extends DefaultTableCellRenderer {
+	private int runningRow;
+	
+	public CaseTableCellRenderer() {
+		runningRow = -1;
+	}
+	
+	public int getRunningRow() {
+		return runningRow;
+	}
+	
+	public void setRunningRow(int row) {
+		runningRow = row;
+	}
+	
+	public void resetRunningRow() {
+		runningRow = -1;
+	}
+	
+	public Component getTableCellRendererComponent(JTable table, Object value,
+			boolean isSelected, boolean hasFocus, int row, int column) {
+		
+		if(row % 2 == 0) {
+			setBackground(Color.white);
+		} else{
+			setBackground(Color.LIGHT_GRAY);
+		}	
+		
+		setHorizontalAlignment(JLabel.CENTER);
+		
+		if (row == runningRow) {
+			setBackground(Color.GRAY);
+		}
+		
+		if (column == CaseTableModel.COLUMN_RESULT) {
+			ParseResult result = (ParseResult) value;
+			if (result == ParseResult.PASS) {
+				setForeground(Color.GREEN);
+			}
+			if (result == ParseResult.FAIL) {
+				setForeground(Color.RED);
+			}
+			if (result == ParseResult.NO_PARSE
+					|| result == ParseResult.FAIL_PARSE
+					|| result == ParseResult.FAIL_GETLOG) {
+				setForeground(Color.ORANGE);
+			}
+		} else {
+			setForeground(Color.BLACK);
+		}
+				
+		return super.getTableCellRendererComponent(table, value, 
+				isSelected, hasFocus, row, column);		
+	}
+	
+}
+
 public class MainGui {
 
 	public static final int WIDTH = 1024;
@@ -372,10 +581,12 @@ public class MainGui {
 		caseTable.setAlignmentY(Component.CENTER_ALIGNMENT);
 		caseTable.setDefaultRenderer(Object.class, tcr);
 		caseTable.getTableHeader().setReorderingAllowed(false);
+		caseTable.getTableHeader().setDefaultRenderer(new GeneralTableHeaderRenderer(caseTable));
 		caseTable.getColumnModel().getColumn(0)
-				.setHeaderRenderer(new TableHeaderRenderer(caseTable));
+				.setHeaderRenderer(new SelectAllTableHeaderRenderer(caseTable));
+
 		caseTable.addMouseListener(new MouseAdapter() {
-			public void mouseClicked(MouseEvent e) {				
+			public void mouseClicked(MouseEvent e) {
 				int row = caseTable.rowAtPoint(e.getPoint());
 				int col = caseTable.columnAtPoint(e.getPoint());
 				if ((col != CaseTableModel.COLUMN_RESULT) && (col != CaseTableModel.COLUMN_TID)) {
@@ -393,18 +604,25 @@ public class MainGui {
 					return;
 				}
 
-				if (getReparseLogFlag()) {
+				if (getReparseLogFlag() || (e.getButton() == MouseEvent.BUTTON3)) {
 					parseLog(row);
 				}
 				
 				ParseResult result = (ParseResult) caseTable.getValueAt(row, col);
 				if (result == ParseResult.FAIL_GETLOG) {
-					String tid = (String) caseTable.getValueAt(row, CaseTableModel.COLUMN_TID);
-					String rel = (String) caseTable.getValueAt(row, CaseTableModel.COLUMN_RELEASE);
-					String customer = (String) caseTable.getValueAt(row, CaseTableModel.COLUMN_CUSTOMER);
+					Case caseToGet = getCaseFromGui(row);
+					String tid = caseToGet.getTID();
+					String rel = caseToGet.getRelease();
+					String customer = caseToGet.getCustomer();
 					String logFileName = controller.getBaseDir() + "/" + customer 
 							+ "/" + rel + "/log/" + tid + ".log";
 					File logFile = new File(logFileName);
+					LogProcesser logProcesser = new LogProcesser(controller, caseToGet, row);
+					try {
+						logProcesser.getCaseLog();
+					} catch (IOException e1) {
+						e1.printStackTrace();
+					}
 					if (logFile.exists()) {
 						result = ParseResult.NO_PARSE;
 					} else {
@@ -461,7 +679,7 @@ public class MainGui {
 								isZEqual = number == total ? true : false;
 							}
 							if (!isZEqual || line.endsWith("NOTFOUND") ||
-									line.endsWith("NOTEQUAL") || line.contains("subscript at")) {
+									line.contains("NOTEQUAL") || line.contains("subscript at")) {
 								attrSet = attrFail;
 							}
 							doc.insertString(doc.getLength(), line + "\n", attrSet);
@@ -859,199 +1077,14 @@ public class MainGui {
 	 */
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
+		
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		} catch (Exception e) {
+			e.printStackTrace();
+		} 
+		
 		new MainGui();
 	}
 
-}
-
-enum ParseResult {
-	PASS, FAIL, NO_PARSE, FAIL_PARSE, FAIL_GETLOG, NA
-}
-
-class CaseTableModel extends AbstractTableModel {
-	public static final int COLUMN_SELECTED = 0;
-	public static final int COLUMN_NO = 1;
-	public static final int COLUMN_TID = 2;
-	public static final int COLUMN_FEATURE_ID = 3;
-	public static final int COLUMN_RELEASE = 4;
-	public static final int COLUMN_CUSTOMER = 5;
-	public static final int COLUMN_CASE_TYPE = 6;
-	public static final int COLUMN_BASE_DATA = 7;
-	public static final int COLUMN_STATUS = 8;
-	public static final int COLUMN_TIME_USED = 9;
-	public static final int COLUMN_RESULT = 10;
-
-	Object[] colNameSource = { "", "No.", "Tid", "Fid", "Release", "Customer",
-			"CaseType", "BaseData", "Status", "Time Used", "Result" };
-	Vector<Object> colName = new Vector<Object>();
-	Vector<Object> data;
-
-	public CaseTableModel() {
-		data = new Vector<Object>();
-
-		for (int i = 0; i < colNameSource.length; i++) {
-			colName.add(colNameSource[i]);
-		}
-
-	}
-
-	public int getColumnCount() {
-		return colName.size();
-	}
-
-	public int getRowCount() {
-		return data.size();
-	}
-
-	public Object getValueAt(int row, int col) {
-		return ((Vector<Object>) data.get(row)).get(col);
-	}
-
-	public Class<?> getColumnClass(int col) {
-		return getValueAt(0, col).getClass();
-	}
-
-	public String getColumnName(int column) {
-		if (column == CaseTableModel.COLUMN_SELECTED) {
-			return "Select All";
-		}
-
-		return colName.get(column).toString();
-	}
-
-	public void setValueAt(Object value, int row, int col) {
-		((Vector<Object>) data.get(row)).set(col, value);
-		fireTableCellUpdated(row, col);
-	}
-
-	public boolean isCellEditable(int row, int col) {
-
-		if (col == CaseTableModel.COLUMN_SELECTED) {
-			return true;
-		}
-
-		return false;
-	}
-
-	public void selectAll(boolean selected) {
-		int len = getRowCount();
-		for (int i = 0; i < len; i++) {
-			setValueAt(Boolean.valueOf(selected), i, CaseTableModel.COLUMN_SELECTED);
-		}
-	}
-
-	public void addRow(Vector<Object> rowToAdd) {
-		if (rowToAdd.size() == colName.size()) {
-			data.add(rowToAdd);
-			fireTableDataChanged();
-		} else {
-			System.out
-					.println("invalid row to add: number of column doesnt match!");
-		}
-	}
-
-	public void removeRow(int row) {
-		if (row >= 0 && row < getRowCount()) {
-			data.remove(row);
-			fireTableDataChanged();
-		}
-	}
-}
-
-class TableHeaderRenderer implements TableCellRenderer {
-	JCheckBox selectAll;
-	JTableHeader tableHeader;
-	CaseTableModel tableModel;
-
-	public TableHeaderRenderer(JTable table) {
-		selectAll = new JCheckBox();
-		this.tableHeader = table.getTableHeader();
-		tableModel = (CaseTableModel) table.getModel();
-
-		table.getTableHeader().addMouseListener(new MouseAdapter() {
-			public void mouseClicked(MouseEvent e) {
-				int column = tableHeader.columnAtPoint(e.getPoint());
-				if (column == CaseTableModel.COLUMN_SELECTED) {
-					boolean selected = !selectAll.isSelected();
-					selectAll.setSelected(selected);
-					tableHeader.repaint();
-					tableModel.selectAll(selected);
-				}
-			}
-		});
-		table.getColumnModel().getColumn(CaseTableModel.COLUMN_SELECTED)
-				.setPreferredWidth(selectAll.getWidth());
-	}
-
-	public Component getTableCellRendererComponent(JTable table, Object value,
-			boolean isSelected, boolean hasFocus, int row, int column) {
-		JComponent component;
-
-		if (column == CaseTableModel.COLUMN_SELECTED) {
-			component = selectAll;
-			selectAll.setHorizontalAlignment(SwingConstants.CENTER);
-		} else {
-			component = (JLabel) value;
-		}
-
-		return component;
-	}
-
-}
-
-class CaseTableCellRenderer extends DefaultTableCellRenderer {
-	private int runningRow;
-	
-	public CaseTableCellRenderer() {
-		runningRow = -1;
-	}
-	
-	public int getRunningRow() {
-		return runningRow;
-	}
-	
-	public void setRunningRow(int row) {
-		runningRow = row;
-	}
-	
-	public void resetRunningRow() {
-		runningRow = -1;
-	}
-	
-	public Component getTableCellRendererComponent(JTable table, Object value,
-			boolean isSelected, boolean hasFocus, int row, int column) {
-		
-		if(row % 2 == 0) {
-			setBackground(Color.white);
-		} else{
-			setBackground(Color.LIGHT_GRAY);
-		}	
-		
-		setHorizontalAlignment(JLabel.CENTER);
-		
-		if (row == runningRow) {
-			setBackground(Color.GRAY);
-		}
-		
-		if (column == CaseTableModel.COLUMN_RESULT) {
-			ParseResult result = (ParseResult) value;
-			if (result == ParseResult.PASS) {
-				setForeground(Color.GREEN);
-			}
-			if (result == ParseResult.FAIL) {
-				setForeground(Color.RED);
-			}
-			if (result == ParseResult.NO_PARSE
-					|| result == ParseResult.FAIL_PARSE
-					|| result == ParseResult.FAIL_GETLOG) {
-				setForeground(Color.ORANGE);
-			}
-		} else {
-			setForeground(Color.BLACK);
-		}
-				
-		return super.getTableCellRendererComponent(table, value, 
-				isSelected, hasFocus, row, column);		
-	}
-	
 }

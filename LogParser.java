@@ -70,6 +70,7 @@ class TNode {
 
 class RNode {
 	public CheckResult checkResult;
+	public String actualValue;
 	public String key;
 	public String value;
 	public List<RNode> subNodes;
@@ -79,6 +80,7 @@ class RNode {
 		value = null;
 		subNodes = new ArrayList<RNode>();
 		checkResult = CheckResult.NOTFOUND;
+		actualValue = null;
 
 	}
 
@@ -87,6 +89,7 @@ class RNode {
 		value = sValue;
 		subNodes = sNode;
 		checkResult = CheckResult.NOTFOUND;
+		actualValue = null;
 
 	}
 
@@ -111,6 +114,9 @@ class RNode {
 			sb.append("=" + value);
 		}
 		sb.append(" -> " + checkResult);
+		if (checkResult == CheckResult.NOTEQUAL) {
+			sb.append("(actualValue=" + actualValue + ")");
+		}
 		
 		if (!isLeaf()) {
 			sb.append("(");
@@ -136,7 +142,11 @@ class RNode {
 		if (value != null) {
 			sb.append("=" + value);
 		}
-		sb.append(" -> " + checkResult + "\n");
+		if (checkResult == CheckResult.NOTEQUAL) {
+			sb.append(" -> " + checkResult + " (" + actualValue + ")\n");
+		} else {
+			sb.append(" -> " + checkResult + "\n");
+		}
 		
 		if (!isLeaf()) {
 			sb.append(beginTabs + "(\n");
@@ -153,12 +163,24 @@ class RNode {
 	
 	public void reset() {
 		checkResult = CheckResult.NOTFOUND;
-		
+		actualValue = null;
 		if (!isLeaf()) {
 			Iterator<RNode> it = subNodes.iterator();
 			while (it.hasNext()) {
 				RNode child = it.next();
 				child.reset();
+			}
+		}
+	}
+	
+	public void setToEqual() {
+		checkResult = CheckResult.EQUAL;
+		actualValue = null;
+		if (!isLeaf()) {
+			Iterator<RNode> it = subNodes.iterator();
+			while (it.hasNext()) {
+				RNode child = it.next();
+				child.setToEqual();
 			}
 		}
 	}
@@ -302,8 +324,6 @@ public class LogParser {
 		if (!str.endsWith(")")) {
 			end = len;
 			value = str.substring(start, end);
-			// System.out.println("\t start = " + start + " end " + end +
-			// ", key = " + key + ", value = " + value);
 			root.subNodes.add(new TNode(key, value,
 					new ArrayList<TNode>()));
 		}
@@ -875,6 +895,7 @@ public class LogParser {
 							index1 = child.value.indexOf(substr, start1);
 							if ((index1 < 0) || (start2 == 0 && index1 != 0)) {
 								rn.checkResult = CheckResult.NOTEQUAL;
+								rn.actualValue = child.value;
 								break;
 							} else {
 								start1 = index1 + substr.length();
@@ -889,6 +910,7 @@ public class LogParser {
 						rn.checkResult = CheckResult.EQUAL;
 					} else {
 						rn.checkResult = CheckResult.NOTEQUAL;
+						rn.actualValue = child.value;
 					}
 				}
 			} else {
@@ -943,6 +965,7 @@ public class LogParser {
 	public void resetRTree(RNode root) {
 
 		root.checkResult = CheckResult.NOTFOUND;
+		root.actualValue = null;
 		if (!root.isLeaf()) {
 			RNode child = null;
 			Iterator<RNode> it = root.subNodes.iterator();
@@ -1202,7 +1225,8 @@ public class LogParser {
 						TNode tn = traceTrees.get(j);
 						if (rn.key.equals(tn.key)) {
 							if (rn.checkResult != CheckResult.NOTFOUND) {
-								resetRTree(rn);
+								//resetRTree(rn);
+								rn.reset();
 							}
 							
 							rn.checkResult = CheckResult.EQUAL;
@@ -1219,6 +1243,10 @@ public class LogParser {
 							}
 						}
 					}
+					if (number >= total) {
+					// there might another non-equal trace is compared, which results rn's result is NOTEQUAL
+						rn.setToEqual();
+					}
 					resultPrefix[i] = prefix + "-" + number;
 					if (number != total) {
 						result = false;
@@ -1232,7 +1260,8 @@ public class LogParser {
 						if (rn.key.equals(tn.key)) {
 
 							if (rn.checkResult != CheckResult.NOTFOUND) {
-								resetRTree(rn);
+								//resetRTree(rn);
+								rn.reset();
 							}
 
 							rn.checkResult = CheckResult.EQUAL;
@@ -1401,9 +1430,9 @@ public class LogParser {
 		// TODO Auto-generated method stub
 		//LogParser lp = new LogParser();
 		XController controller = new XController();
-		controller.setBaseDir("D:\\Workspace\\XAuto\\automation\\R29SUC");
+		controller.setBaseDir("D:\\automation\\R29SUH");
 		LogParser lp = controller.getLogParser();
-		Case c = new Case("cx6702", "72400", "R27SU6", "VFI", "Function", "VFI");
+		Case c = new Case("de5408", "72400", "R27SU7", "VFCZ", "Audit", "VFCZ");
 		//boolean result = lp.parseCase(c);
 		boolean result = false;
 		try {
