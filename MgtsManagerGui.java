@@ -2,11 +2,20 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.List;
 
 import javax.swing.*;
-
 import acm.gui.TableLayout;
 
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.input.SAXBuilder;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
 
 public class MgtsManagerGui {
 	public final static int APPROVE_OPTION = 1;
@@ -14,12 +23,15 @@ public class MgtsManagerGui {
 	public final static int CANCEL_OPTION = 3;
 	public final static int WIDTH = 400;
 	public final static int HEIGHT = 300;
+	public final static String MGTS_CONFIG_FILE = System.getProperty("user.home") + "/.sptest/mgts.xml";
 	
 	XController controller = null;
 	
 	JDialog mainWindow = null;
 	JPanel configPane = null;
 	JComboBox<String> serverList = null;
+	JTextField hostnameTextField = null;
+	JTextField ipTextField = null;
 	JComboBox<String> protocolList = null;
 	JTextField shelfTextField = null;
 	JTextField userTextField = null;
@@ -28,7 +40,11 @@ public class MgtsManagerGui {
 	
 	JPanel buttonPane = null;
 	JButton setButton = null;
+	JButton saveButton = null;
 	JButton cancelButton = null;
+	
+	Document configFile = null;
+	Element root = null;
 	
 	public MgtsManagerGui(XController controller) {
 		this.controller = controller;
@@ -52,7 +68,7 @@ public class MgtsManagerGui {
 		mainPane.setOneTouchExpandable(false);
 		mainPane.setOrientation(JSplitPane.VERTICAL_SPLIT);
 		mainPane.setDividerSize(0);
-		mainPane.setDividerLocation((mainWindow.getHeight() * 3) / 5);
+		mainPane.setDividerLocation((mainWindow.getHeight() * 2) / 3);
 		mainPane.setLeftComponent(configPane);
 		mainPane.setRightComponent(buttonPane);
 		
@@ -63,25 +79,22 @@ public class MgtsManagerGui {
 	
 	private void initConfigPane() {
 		configPane = new JPanel();
-		configPane.setLayout(new TableLayout(6, 2));
+		configPane.setLayout(new TableLayout(8, 2));
 		serverList = new JComboBox<String>();
+		hostnameTextField = new JTextField(20);
+		ipTextField = new JTextField(16);
 		protocolList = new JComboBox<String>();
 		shelfTextField = new JTextField(10);
 		userTextField = new JTextField(10);
 		passwdTextField = new JPasswordField(10);
 		displayTextField = new JTextField(20);
 		
-		serverList.addItem("p250alu");
-		serverList.addItem("p200alu");
-		protocolList.addItem("ITU");
-		protocolList.addItem("ANSI");
-		shelfTextField.setText("EE");
-		userTextField.setText("yrli");
-		passwdTextField.setText("yrli");
-		displayTextField.setText(MainGui.DEFAULT_DISPLAY);
-		
 		configPane.add(new JLabel("MGTS Server "));
 		configPane.add(serverList);
+		configPane.add(new JLabel("Server Hostname "));
+		configPane.add(hostnameTextField);
+		configPane.add(new JLabel("IP Address "));
+		configPane.add(ipTextField);
 		configPane.add(new JLabel("Protocol "));
 		configPane.add(protocolList);
 		configPane.add(new JLabel("Shelf Name "));
@@ -92,11 +105,62 @@ public class MgtsManagerGui {
 		configPane.add(passwdTextField);
 		configPane.add(new JLabel("Display "));
 		configPane.add(displayTextField);
+		
+		protocolList.addItem("ITU");
+		protocolList.addItem("ANSI");
+		
+		serverList.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				showHost((String) serverList.getSelectedItem());		
+			}
+		});
+		
+		SAXBuilder builder = new SAXBuilder();
+		try {
+			configFile = builder.build(new File(MGTS_CONFIG_FILE));
+			root = configFile.getRootElement();
+		} catch (Exception e) {
+			setDefaultHost();
+			return;
+		}
+		
+		List<Element> hostList = root.getChildren();
+		for (int i = 0; i < hostList.size(); i++) {
+			serverList.addItem(hostList.get(i).getName());
+		}
+		showHost(hostList.get(0).getName());
+		
+	}
+	
+	public void setDefaultHost() {
+		serverList.addItem("p250alu");
+		hostnameTextField.setText("p250alu");
+		ipTextField.setText("135.252.170.143");
+		protocolList.setSelectedItem("ANSI");
+		shelfTextField.setText("EE");
+		userTextField.setText("yrli");
+		passwdTextField.setText("yrli");
+		displayTextField.setText(MainGui.DEFAULT_DISPLAY);
+	}
+	
+	public void showHost(String itemName) {
+		if (root == null) {
+			return;
+		}
+		Element mgtsHost = root.getChild(itemName);
+		hostnameTextField.setText(mgtsHost.getChildText("hostname"));
+		ipTextField.setText(mgtsHost.getChildText("ipaddr"));
+		protocolList.setSelectedItem(mgtsHost.getChildText("protocol"));
+		shelfTextField.setText(mgtsHost.getChildText("shelf"));
+		userTextField.setText(mgtsHost.getChildText("user"));
+		passwdTextField.setText(mgtsHost.getChildText("passwd"));
+		displayTextField.setText(mgtsHost.getChildText("display"));
 	}
 	
 	private void initButtonPane() {
 		buttonPane = new JPanel();
 		setButton = new JButton("Set");
+		saveButton = new JButton("Save");
 		cancelButton = new JButton("Cancel");
 		
 		setButton.addActionListener(new ActionListener() {
@@ -109,13 +173,8 @@ public class MgtsManagerGui {
 						return;
 					}
 				}
-				String hostname = (String) serverList.getSelectedItem();
-				String ip = null;
-				if (hostname.equals("p250alu")) {
-					ip = "135.252.170.143";
-				} else {
-					ip = "135.252.170.118";
-				}
+				String hostname = hostnameTextField.getText();
+				String ip = ipTextField.getText();
 				int port = 23;
 				String username = userTextField.getText();
 				String passwd = passwdTextField.getText();
@@ -129,6 +188,16 @@ public class MgtsManagerGui {
 				mainWindow.dispose();
 			}
 		});
+		saveButton.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e) {
+				try {
+					saveConfigFile();
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			}
+		});
 		cancelButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				mainWindow.dispose();
@@ -136,7 +205,25 @@ public class MgtsManagerGui {
 		});
 		
 		buttonPane.add(setButton);
+		buttonPane.add(saveButton);
 		buttonPane.add(cancelButton);
+	}
+	
+	public void saveConfigFile() throws IOException {
+		String selectedHost = (String) serverList.getSelectedItem();
+		Element hostToSave = root.getChild(selectedHost);
+		
+		hostToSave.getChild("hostname").setText(hostnameTextField.getText());
+		hostToSave.getChild("ipaddr").setText(ipTextField.getText());
+		hostToSave.getChild("shelf").setText(shelfTextField.getText());
+		hostToSave.getChild("user").setText(userTextField.getText());
+		hostToSave.getChild("passwd").setText(passwdTextField.getText());
+		hostToSave.getChild("display").setText(displayTextField.getText());
+		hostToSave.getChild("protocol").setText((String) protocolList.getSelectedItem());
+		
+		XMLOutputter outputter = new XMLOutputter();
+		outputter.setFormat(Format.getPrettyFormat());
+		outputter.output(configFile, new FileOutputStream(MGTS_CONFIG_FILE));
 	}
 
 	/**

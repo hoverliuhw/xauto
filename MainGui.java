@@ -47,7 +47,6 @@ class CaseTableModel extends AbstractTableModel {
 		for (int i = 0; i < colNameSource.length; i++) {
 			colName.add(colNameSource[i]);
 		}
-
 	}
 
 	public int getColumnCount() {
@@ -80,12 +79,7 @@ class CaseTableModel extends AbstractTableModel {
 	}
 
 	public boolean isCellEditable(int row, int col) {
-
-		if (col == CaseTableModel.COLUMN_SELECTED) {
-			return true;
-		}
-
-		return false;
+		return col == CaseTableModel.COLUMN_SELECTED;
 	}
 
 	public void selectAll(boolean selected) {
@@ -1077,13 +1071,13 @@ public class MainGui {
 	 */
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		
+		/* 
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (Exception e) {
 			e.printStackTrace();
-		} 
-		
+		}
+		*/
 		new MainGui();
 	}
 
