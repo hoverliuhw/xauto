@@ -194,6 +194,93 @@ public class XController {
 		}
 		gui.showMessageDialog(str);
 	}
+	
+	public String parseFrm(String frmFile) throws Exception {
+		File frm = new File(frmFile);
+		if (!frm.exists()) {
+			return frm.getName() + " does NOT exist.";
+		}
+		BufferedReader br = new BufferedReader(new FileReader(frmFile));
+		String separator = "/**************************************************/\n";
+		StringBuilder sb = new StringBuilder();
+		String line = null;
+		
+		while ((line = br.readLine()) != null) {
+			sb.append(separator);
+			int start = line.indexOf("SPA");
+			int end = line.indexOf("&");
+			String rcName = getRCName(line.substring(start, end));
+			start = end + 1;
+			end = line.indexOf("! ");
+			String operation = line.substring(start, end);
+			start = end + 2;
+			end = line.lastIndexOf("! ");
+			
+			String table = genTable(line.substring(start, end));
+			
+			sb.append("<" + operation + ">\t");
+			sb.append(rcName + "\n");
+			sb.append(table);
+		}
+		
+		br.close();
+		return sb.toString();
+	}
+	
+	public String getRCName(String tableName) throws IOException {
+		int start = tableName.indexOf("_") + 1;
+		int end = tableName.lastIndexOf("_");
+		String spaName = tableName.substring(start, end);
+		File symFile = new File(baseDir + "/sym/" + spaName + ".sym");
+		if (!symFile.exists()) {
+			return tableName;
+		}
+		BufferedReader reader = new BufferedReader(new FileReader(symFile));
+		String line = null;
+		while ((line = reader.readLine()) != null) {
+			if (line.startsWith(tableName)) {
+				break;
+			}
+		}
+		reader.close();
+		
+		String rcName = null;
+		if (line.endsWith("rc")) {
+			end = line.lastIndexOf(";");
+			start = line.lastIndexOf(";", end - 1) + 1;
+			rcName = line.substring(start, end) + " " + line.substring(end + 1);
+		} else {
+			start = line.lastIndexOf(" ") + 1;
+			rcName = line.substring(start);
+		}
+		
+		return rcName;
+	}
+	
+	public String genTable(String frmLine) {
+		String[] array = frmLine.split("! ");
+		StringBuilder sb = new StringBuilder();
+		int start = 0, end = 0;
+		for (String field : array) {
+			if (field.equals("GETDATA")) {
+				continue;
+			}
+			sb.append("   ");
+			if (field.startsWith("index")) {
+				sb.append("*> ");
+			} else {
+				sb.append("   ");
+			}
+			start = 0;
+			end = field.indexOf("=");
+			sb.append(field.substring(start, end) + " \t");
+			start = field.indexOf("\"", end) + 1;
+			end = field.lastIndexOf("\"");
+			sb.append(field.substring(start, end) + "\n");
+		}
+		sb.append("\n");
+		return sb.toString();
+	}
 
 	/*
 	 * Before running each audit case, SIMDB/AIRTDB/UARTDB need to be created

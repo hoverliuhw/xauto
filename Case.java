@@ -11,7 +11,7 @@ public class Case {
 	private String casetype;
 	private String basedata;
 	private int needtime;
-	private String runresult;
+	private ParseResult runresult;
 	private int usedtime;
 
 	public Case(String tid, String fid, String release, String customer,
@@ -23,7 +23,7 @@ public class Case {
 		this.casetype = casetype;
 		this.basedata = basedata;
 		this.needtime = needtime;
-		runresult = "NOTRUN";
+		runresult = ParseResult.NA;
 		usedtime = 0;
 	}
 
@@ -36,7 +36,7 @@ public class Case {
 		this.casetype = casetype;
 		this.basedata = basedata;
 		needtime = 60;
-		runresult = "NOTRUN";
+		runresult = ParseResult.NA;
 		usedtime = 0;
 	}
 
@@ -96,11 +96,11 @@ public class Case {
 		return needtime;
 	}
 
-	public void setRunResult(String result) {
+	public void setRunResult(ParseResult result) {
 		this.runresult = result;
 	}
 
-	public String getRunResult() {
+	public ParseResult getRunResult() {
 		return runresult;
 	}
 

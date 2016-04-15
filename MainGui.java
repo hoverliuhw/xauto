@@ -249,6 +249,7 @@ public class MainGui {
 	private JMenuItem menuLoadResult = null;
 	private JMenuItem menuClearResult = null;
 	private JMenuItem menuResultStatistics = null;
+	private JMenuItem menuShowCaseFrm = null;
 	
 	private JMenu menuHelp = null;
 	private JMenuItem menuManual = null;
@@ -344,9 +345,11 @@ public class MainGui {
 		menuLoadResult = new JMenuItem("Load Result From Disk");
 		menuClearResult = new JMenuItem("Clear Result in Table");
 		menuResultStatistics = new JMenuItem("Result Statistics");
+		menuShowCaseFrm = new JMenuItem("Show Case Frm/Frmbk");
 		menuTools.add(menuLoadResult);
 		menuTools.add(menuClearResult);
 		menuTools.add(menuResultStatistics);
+		menuTools.add(menuShowCaseFrm);
 		menuBar.add(menuTools);
 		
 		menuHelp = new JMenu("Help");
@@ -425,6 +428,18 @@ public class MainGui {
 		menuResultStatistics.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				getResultStatistics();
+			}
+		});
+		
+		menuShowCaseFrm.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				int row = caseTable.getSelectedRow();
+				if (row < 0) {
+					showMessageDialog("ERROR: No case is selected!");
+				} else {
+					Case caseToShow = getCaseFromGui(row);
+					showCaseFrm(caseToShow);
+				}
 			}
 		});
 		
@@ -593,8 +608,9 @@ public class MainGui {
 					return;
 				}
 				
+				Case caseToShow = getCaseFromGui(row);
 				if (col == CaseTableModel.COLUMN_TID) {
-					showCaseInfo(row);
+					showCaseInfo(caseToShow);
 					return;
 				}
 
@@ -604,7 +620,7 @@ public class MainGui {
 				
 				ParseResult result = (ParseResult) caseTable.getValueAt(row, col);
 				if (result == ParseResult.FAIL_GETLOG) {
-					Case caseToGet = getCaseFromGui(row);
+					Case caseToGet = caseToShow;
 					String tid = caseToGet.getTID();
 					String rel = caseToGet.getRelease();
 					String customer = caseToGet.getCustomer();
@@ -621,6 +637,7 @@ public class MainGui {
 						result = ParseResult.NO_PARSE;
 					} else {
 						caseTable.setValueAt(ParseResult.NA, row, CaseTableModel.COLUMN_RESULT);
+						caseToShow.setRunResult(ParseResult.NA);
 						showMessageDialog(logFile.getAbsolutePath() + " NOT exist\n");
 					}
 				}
@@ -635,81 +652,7 @@ public class MainGui {
 					return;
 				}
 				
-				JTextPane resultInfo = new JTextPane();
-				resultInfo.setEditable(false);
-				String tid = (String) caseTable.getValueAt(row, CaseTableModel.COLUMN_TID);
-				String rel = (String) caseTable.getValueAt(row, CaseTableModel.COLUMN_RELEASE);
-				String customer = (String) caseTable.getValueAt(row, CaseTableModel.COLUMN_CUSTOMER);
-
-				String parseResultName = null;
-				if (result== ParseResult.PASS) {
-					parseResultName = controller.getBaseDir() + "/" + customer 
-							+ "/" + rel + "/log/" + tid + ".PASS";
-				} else {
-					parseResultName = controller.getBaseDir() + "/" + customer 
-							+ "/" + rel + "/faillog/" + tid + ".FAIL";
-				}
-				File parseResultFile = new File(parseResultName);
-					
-				Document doc = resultInfo.getDocument();
-				SimpleAttributeSet attrSuc = new SimpleAttributeSet();
-				SimpleAttributeSet attrFail = new SimpleAttributeSet();						
-				StyleConstants.setForeground(attrSuc, Color.BLACK);
-				StyleConstants.setForeground(attrFail, Color.RED);
-					
-				if (parseResultFile.exists()) {
-					try {
-						BufferedReader br = new BufferedReader(new FileReader(parseResultFile));
-						Pattern p = Pattern.compile("^Z[0-9]+-[0-9]+:");
-						String line = null;
-						while ((line = br.readLine()) != null) {
-							SimpleAttributeSet attrSet = attrSuc;
-							Matcher m = p.matcher(line);
-							boolean isZEqual = true;
-							if (m.find()) {
-								int scroll = line.indexOf("-");
-								int total = Integer.parseInt(line.substring(1, scroll));
-								int number = Integer.parseInt(line.substring(scroll + 1, m.end() - 1));
-								isZEqual = number == total ? true : false;
-							}
-							if (!isZEqual || line.endsWith("NOTFOUND") ||
-									line.contains("NOTEQUAL") || line.contains("subscript at")) {
-								attrSet = attrFail;
-							}
-							doc.insertString(doc.getLength(), line + "\n", attrSet);
-						}
-						br.close();
-					} catch (Exception e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-				} else {
-					SimpleAttributeSet attrSet = attrFail;
-					try {
-						String str = "ERROR: Result parse file not exist!\n" +
-								"   Please check result file's existence under res dir\n" +
-								"   if exist, open \"Reparse Log\" under Configuration menu, " +
-								"then click again.";
-						doc.insertString(doc.getLength(), str, attrSet);
-					} catch (BadLocationException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-				}	
-				
-				JScrollPane resultPane = new JScrollPane(resultInfo,
-						JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-						JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-				//JFrame resultWindow = new JFrame(parseResultFile.getAbsolutePath());
-				JDialog resultWindow = new JDialog(mainFrame, parseResultFile.getAbsolutePath(), true);
-				resultWindow.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-				resultWindow.add(resultPane);
-				resultWindow.setSize(600, 400);
-				Dimension screensize = Toolkit.getDefaultToolkit().getScreenSize(); 
-				int x = (int) screensize.getWidth() / 2 - resultWindow.getWidth() / 2;
-				int y = (int) screensize.getHeight() / 2 - resultWindow.getHeight() / 2;
-				resultWindow.setLocation(x, y);
-				resultWindow.setVisible(true);
+				showParseResult(caseToShow);
 			}
 			
 			public void mouseExited(MouseEvent e) {
@@ -910,20 +853,18 @@ public class MainGui {
 		String basedata = (String) caseTable.getValueAt(row, CaseTableModel.COLUMN_BASE_DATA);
 		Case testCase = new Case(tid, fid, rel, customer, caseType,
 				basedata);
-		
+		testCase.setRunResult((ParseResult) caseTable.getValueAt(row, CaseTableModel.COLUMN_RESULT));
 		return testCase;
 	}
 	
-	public void showCaseInfo(int row) {
-		JTextPane caseInfoPane = new JTextPane();
-		caseInfoPane.setEditable(false);
-		String tid = (String) caseTable.getValueAt(row, CaseTableModel.COLUMN_TID);
-		String rel = (String) caseTable.getValueAt(row, CaseTableModel.COLUMN_RELEASE);
-		String customer = (String) caseTable.getValueAt(row, CaseTableModel.COLUMN_CUSTOMER);
+	public void showCaseInfo(Case caseToShow) {		
 		StringBuilder caseInfo = new StringBuilder();
 		
-		File cmdFile = new File(controller.getBaseDir() + "/" + customer 
-				+ "/" + rel + "/res/" + tid + ".cmd" );		
+		File cmdFile = new File(controller.getBaseDir()
+				+ "/" + caseToShow.getCustomer() 
+				+ "/" + caseToShow.getRelease()
+				+ "/res/" + caseToShow.getTID()
+				+ ".cmd" );		
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(cmdFile));
 			String line = null;
@@ -932,15 +873,24 @@ public class MainGui {
 			}
 			br.close();
 		} catch (FileNotFoundException e) {
-			caseInfo.append("File " + cmdFile.getName() + " NOT exist, run state machine " + tid);
+			caseInfo.append("File " + cmdFile.getName()
+					+ " NOT exist, run state machine "
+					+ caseToShow.getTID());
 		} catch (IOException e) {
 			caseInfo.append("Read error");			
 		}
 		
+		JTextPane caseInfoPane = new JTextPane();
+		caseInfoPane.setEditable(false);
 		caseInfoPane.setText(caseInfo.toString());
-		JDialog caseInfoWindow = new JDialog(mainFrame, tid + " information", true);
+		
+		JScrollPane caseInfoScrollPane = new JScrollPane(caseInfoPane,
+				JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		
+		JDialog caseInfoWindow = new JDialog(mainFrame, caseToShow.getTID() + " information", true);
 		caseInfoWindow.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-		caseInfoWindow.add(caseInfoPane);
+		caseInfoWindow.setContentPane(caseInfoScrollPane);
 		caseInfoWindow.setSize(600, 400);
 		Dimension screensize = Toolkit.getDefaultToolkit().getScreenSize(); 
 		int x = (int) screensize.getWidth() / 2 - 600 / 2;
@@ -950,6 +900,141 @@ public class MainGui {
 		caseInfoWindow.setVisible(true);		
 	}
 	
+	public void showCaseFrm(Case caseToShow) {
+		String frmFile = controller.getBaseDir()
+				+ "/" + caseToShow.getCustomer()
+				+ "/" + caseToShow.getRelease()
+				+ "/res/" + caseToShow.getTID() + ".frm";
+		String frmbkFile = controller.getBaseDir()
+				+ "/" + caseToShow.getCustomer()
+				+ "/" + caseToShow.getRelease()
+				+ "/res/" + caseToShow.getTID() + ".frmbk";
+		
+		JTextArea frmTextPane = new JTextArea();
+		frmTextPane.setEditable(false);
+		try {
+			frmTextPane.setText(controller.parseFrm(frmFile));
+		} catch (Exception e) {
+			frmTextPane.setText("frm file read error");
+		}
+		frmTextPane.setCaretPosition(0);
+		JScrollPane frmPane = new JScrollPane(frmTextPane,
+				JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		
+		JTextArea frmbkTextPane = new JTextArea();
+		frmbkTextPane.setEditable(false);
+		try {
+			frmbkTextPane.setText(controller.parseFrm(frmbkFile));
+		} catch (Exception e) {
+			frmbkTextPane.setText("frmbk file read error");
+		}
+		frmbkTextPane.setCaretPosition(0);
+		JScrollPane frmbkPane = new JScrollPane(frmbkTextPane,
+				JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		
+		JTabbedPane frmTab = new JTabbedPane();
+		frmTab.addTab(caseToShow.getTID() + ".frm", frmPane);
+		frmTab.addTab(caseToShow.getTID() + ".frmbk", frmbkPane);
+		
+		JDialog frmWindow = new JDialog(mainFrame, caseToShow.getTID() + " frm/frmbk", true);
+		frmWindow.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		frmWindow.setContentPane(frmTab);
+		frmWindow.setSize(600, 600);
+		Dimension screensize = Toolkit.getDefaultToolkit().getScreenSize(); 
+		int x = (int) screensize.getWidth() / 2 - frmWindow.getWidth() / 2;
+		int y = (int) screensize.getHeight() / 2 - frmWindow.getHeight() / 2;
+		frmWindow.setLocation(x, y);
+		frmWindow.setVisible(true);
+	}
+	
+	public void showParseResult(Case caseToShow) {		
+		ParseResult result = caseToShow.getRunResult();
+		String baseDir = controller.getBaseDir();
+		
+		if (baseDir == null ||
+				(result != ParseResult.PASS && result != ParseResult.FAIL)) {
+			return;
+		}
+		
+		String tid = caseToShow.getTID();
+		String rel = caseToShow.getRelease();
+		String customer = caseToShow.getCustomer();
+		
+		JTextPane resultInfo = new JTextPane();
+		resultInfo.setEditable(false);
+
+		String parseResultName = null;
+		if (result == ParseResult.PASS) {
+			parseResultName = baseDir + "/" + customer 
+					+ "/" + rel + "/log/" + tid + ".PASS";
+		} else {
+			parseResultName = baseDir + "/" + customer 
+					+ "/" + rel + "/faillog/" + tid + ".FAIL";
+		}
+		File parseResultFile = new File(parseResultName);
+			
+		Document doc = resultInfo.getDocument();
+		SimpleAttributeSet attrSuc = new SimpleAttributeSet();
+		SimpleAttributeSet attrFail = new SimpleAttributeSet();						
+		StyleConstants.setForeground(attrSuc, Color.BLACK);
+		StyleConstants.setForeground(attrFail, Color.RED);
+			
+		if (parseResultFile.exists()) {
+			try {
+				BufferedReader br = new BufferedReader(new FileReader(parseResultFile));
+				Pattern p = Pattern.compile("^Z[0-9]+-[0-9]+:");
+				String line = null;
+				while ((line = br.readLine()) != null) {
+					SimpleAttributeSet attrSet = attrSuc;
+					Matcher m = p.matcher(line);
+					boolean isZEqual = true;
+					if (m.find()) {
+						int scroll = line.indexOf("-");
+						int total = Integer.parseInt(line.substring(1, scroll));
+						int number = Integer.parseInt(line.substring(scroll + 1, m.end() - 1));
+						isZEqual = number == total ? true : false;
+					}
+					if (!isZEqual || line.endsWith("NOTFOUND") ||
+							line.contains("NOTEQUAL") || line.contains("subscript at")) {
+						attrSet = attrFail;
+					}
+					doc.insertString(doc.getLength(), line + "\n", attrSet);
+				}
+				br.close();
+			} catch (Exception e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		} else {
+			SimpleAttributeSet attrSet = attrFail;
+			try {
+				String str = "ERROR: Result parse file not exist!\n" +
+						"   Please check result file's existence under res dir\n" +
+						"   if exist, open \"Reparse Log\" under Configuration menu, " +
+						"then click again.";
+				doc.insertString(doc.getLength(), str, attrSet);
+			} catch (BadLocationException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+		}	
+		
+		JScrollPane resultPane = new JScrollPane(resultInfo,
+				JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		JDialog resultWindow = new JDialog(mainFrame, parseResultFile.getAbsolutePath(), true);
+		resultWindow.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+		resultWindow.add(resultPane);
+		resultWindow.setSize(600, 400);
+		Dimension screensize = Toolkit.getDefaultToolkit().getScreenSize(); 
+		int x = (int) screensize.getWidth() / 2 - resultWindow.getWidth() / 2;
+		int y = (int) screensize.getHeight() / 2 - resultWindow.getHeight() / 2;
+		resultWindow.setLocation(x, y);
+		resultWindow.setVisible(true);
+	}
+
 	public void parseLog(int row) {
 		Case caseToParse = getCaseFromGui(row);
 		ParseResult result = (ParseResult) caseTable.getValueAt(row, CaseTableModel.COLUMN_RESULT);
