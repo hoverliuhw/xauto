@@ -5,7 +5,7 @@ import java.util.TimerTask;
 
 
 public class StateMachineRunner implements Runnable {
-	public static final int DEFAULT_STATE_MACHINE_DURATION = 375;
+	public static final int MAX_STATE_MACHINE_DURATION = 375;
 	private XController controller;
 	private String stateName;
 	
@@ -33,7 +33,7 @@ public class StateMachineRunner implements Runnable {
 				System.out.println("Timeout, stop state machine " + monitor.stopStateMachine(stateName));
 				monitor.disconnect();
 			}
-		}, DEFAULT_STATE_MACHINE_DURATION * 1000);
+		}, MAX_STATE_MACHINE_DURATION * 1000);
 		
 		System.out.println(mgts.runStateMachine(stateName));
 		timer.cancel();

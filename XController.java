@@ -6,6 +6,10 @@ import java.util.TimerTask;
 import javax.swing.JOptionPane;
 
 public class XController {
+	public static final int DEFAULT_INTERVAL = 4;
+	public static final String DEFAULT_DATE = "010109092033";
+	public static final String CACHE_FRM_DIR = "frmdir/";
+	public static final String CEPEXEC = "/cs/sn/cr/cepexec";
 
 	public MainGui gui = null;
 	private String baseDir = null;
@@ -18,13 +22,9 @@ public class XController {
 	private SPAManager spaManager = null;
 	private LogParser logParser = null;
 
-	public static final int DEFAULT_INTERVAL = 4;
-
 	private boolean flagRunning = false;
 	private boolean stopClicked = false;
-
-	public static final String CEPEXEC = "/cs/sn/cr/cepexec";
-
+	
 	public enum CmdType {
 		DATE, LMT, SLEEP, STA, BP, UNDEF;
 	}
@@ -147,7 +147,6 @@ public class XController {
 				"\n*Shelf Name: " + mgts.getShelfName() +
 				"\n*Display: " + mgts.getDisplay();
 		gui.setMgtsInfo(message);
-		//gui.showMessageDialog(message);
 		printLog("Set MGTS SERVER " + mgts.getHostName() + "\n");
 	}
 	
@@ -227,6 +226,10 @@ public class XController {
 		return sb.toString();
 	}
 	
+	/*
+	 * getRCName is to get table name in rcv:menu given a name like SPA_SPANAME_XXX
+	 * this is used to show frm/frmbk content on GUI
+	 */
 	public String getRCName(String tableName) throws IOException {
 		int start = tableName.indexOf("_") + 1;
 		int end = tableName.lastIndexOf("_");
@@ -257,6 +260,10 @@ public class XController {
 		return rcName;
 	}
 	
+	/*
+	 * genTable is to generate a frm line into a list
+	 * this is used to show frm/frmbk content on GUI
+	 */
 	public String genTable(String frmLine) {
 		String[] array = frmLine.split("! ");
 		StringBuilder sb = new StringBuilder();
@@ -266,7 +273,7 @@ public class XController {
 				continue;
 			}
 			sb.append("   ");
-			if (field.startsWith("index")) {
+			if (field.startsWith("index") || field.equals("sequence")) {
 				sb.append("*> ");
 			} else {
 				sb.append("   ");
@@ -308,17 +315,36 @@ public class XController {
 		if (!frmFile.exists()) {
 			return;
 		}
+		if (!host.loadFrm(frmFileName)) {
+			ftpManager.connect();
+			ftpManager.uploadFile(frmFile);
+			ftpManager.disconnect();
+			
+			String frmName = frmFile.getName();
+			
+			host.sendCmd("sed -i \"s/! /,/g\" /tmp/" + frmName);
+			System.out.println(host.sendCmd("/cs/sn/cr/cepexec RCV_TEXT \"RCV:TEXT,SPA\" < /tmp/"
+					+ frmName));
+		}
 		
-		ftpManager.connect();
-		ftpManager.uploadFile(frmFile);
-		ftpManager.disconnect();
+		if (useDynamicFrmbkFlag()) {
+			genFrmbk(frmFile.getName().replaceFirst(".frm", ""));
+		}
+	}
+	
+	public void loadFrmbk(String frmbkFileName) {
+		File frmbkFile = new File(frmbkFileName);
+		File newFrmbkFile = new File(baseDir + "/" + CACHE_FRM_DIR + frmbkFile.getName());
+		if (useDynamicFrmbkFlag() 
+				&& newFrmbkFile.exists()) {
+				host.loadFrmbk(newFrmbkFile.getAbsolutePath());
+		} else {
+			host.loadFrmbk(frmbkFileName);
+		}
 		
-		String frmName = frmFile.getName();
-		
-		host.sendCmd("sed -i \"s/! /,/g\" /tmp/" + frmName);
-		System.out.println(host.sendCmd("/cs/sn/cr/cepexec RCV_TEXT \"RCV:TEXT,SPA\" < /tmp/"
-				+ frmName));
-		//host.sendCmd("rm /tmp/" + frmName);		
+		if (useDynamicFrmbkFlag()) {
+			pgclient.clearRCdata();
+		}
 	}
 	
 	/* It used to be boolean runCase(Case caseToRun)
@@ -330,9 +356,7 @@ public class XController {
 			String rel = caseToRun.getRelease();
 			String resDir = baseDir + "/" + customer + "/" + rel + "/res/";
 			
-			if(!host.loadFrm(resDir + caseToRun.getTID() + ".frm")) {
-				loadFrm(resDir + caseToRun.getTID() + ".frm");
-			}
+			loadFrm(resDir + caseToRun.getTID() + ".frm");
 			
 			File cmdFile = new File(resDir + caseToRun.getTID() + ".cmd");
 			String pid = startTailerLog(caseToRun);
@@ -461,7 +485,7 @@ public class XController {
 			stopTailerLog(pid);
 			Thread.sleep(1000);
 			if (dateChanged) {
-				host.changeDate("010109092033");
+				host.changeDate(DEFAULT_DATE);
 			}
 			host.loadFrmbk(resDir + caseToRun.getTID() + ".frmbk");
 		} catch (Exception e) {
@@ -591,6 +615,13 @@ public class XController {
 		
 		return t;
 	}
+	
+	public Thread genFrmbk(String tid) {
+		Thread t = new Thread(new FrmbkGenerator(this, tid));
+		t.start();
+		
+		return t;
+	}
 
 	public String startTailerLog(Case caseToRun) {
 		printLog("start to tailer log\n");
@@ -636,24 +667,25 @@ public class XController {
 		return logParser.reParseCase(caseToParse, originalResult);
 	}
 	
+	/**
+	 * newRunCase is used to replace runCase(), it re-origanizes sleep mechanism
+	 */
 	public void newRunCase(Case caseToRun) {		
 			String customer = caseToRun.getCustomer();
 			String rel = caseToRun.getRelease();
+			String tid = caseToRun.getTID();
 			String resDir = baseDir + "/" + customer + "/" + rel + "/res/";
 			
-			if(!host.loadFrm(resDir + caseToRun.getTID() + ".frm")) {
-				loadFrm(resDir + caseToRun.getTID() + ".frm");
-			}
-			
-			File cmdFile = new File(resDir + caseToRun.getTID() + ".cmd");
+			loadFrm(resDir + tid + ".frm");
+			File cmdFile = new File(resDir + tid + ".cmd");
 			String pid = startTailerLog(caseToRun);
 			Thread stateRunner = null;
 			boolean dateChanged = false;
 			if (!cmdFile.exists()) {
 				printLog("Run State Machine "
-						+ caseToRun.getTID() + "\n");
+						+ tid + "\n");
 				stateRunner = runState(caseToRun.getTID());
-			} else {				
+			} else {
 				BufferedReader br;
 				try {
 					br = new BufferedReader(new FileReader(cmdFile));
@@ -670,7 +702,6 @@ public class XController {
 						}
 						
 						int start = 0, end = 0;
-						
 						String cmdTypeStr = null;
 						end = line.indexOf("=");
 						if (end > -1) {
@@ -679,7 +710,7 @@ public class XController {
 								continue;					// once find the case, this if will be deleted
 							}
 							if (cmdTypeStr.startsWith("snd:text")) {
-								cmdTypeStr = new String("LMT");
+								cmdTypeStr = "LMT";
 								start = 0;
 							} else {
 								start = end + 1;
@@ -795,7 +826,7 @@ public class XController {
 							break;
 						case STA:
 							if (cmdStr.isEmpty()) {
-								cmdStr = caseToRun.getTID();
+								cmdStr = tid;
 							}
 							printLog("send " + cmdType.toString() + " cmd: "
 									+ cmdStr + "\n");
@@ -864,10 +895,9 @@ public class XController {
 				e.printStackTrace();
 			}
 			if (dateChanged) {
-				host.changeDate("010109092033");
+				host.changeDate(DEFAULT_DATE);
 			}
-			host.loadFrmbk(resDir + caseToRun.getTID() + ".frmbk");
-
+			loadFrmbk(resDir + tid + ".frmbk");
 	}
 
 	public void connectHost() {
@@ -923,19 +953,15 @@ public class XController {
 	}
 
 	public boolean getLoadDataFlag() {
-		if (gui == null) {
-			return false;
-		} 
-		
-		return gui.getLoadDataFlag();
+		return (gui != null) && gui.getLoadDataFlag();
 	}
 	
 	public boolean getReparseLogFlag() {
-		if (gui == null) {
-			return false;
-		}
-		
-		return gui.getReparseLogFlag();
+		return (gui != null) && gui.getReparseLogFlag();
+	}
+	
+	public boolean useDynamicFrmbkFlag() {
+		return  (gui != null) && gui.useDynamicFrmbkFlag();
 	}
 	
 	public boolean isStopClicked() {
@@ -947,10 +973,9 @@ public class XController {
 	}
 
 	public void printLog(String str) {
-		if (gui == null) {
-			return;
+		if (gui != null) {
+			gui.printLog(str);
 		}
-		gui.printLog(str);
 	}
 
 	/**

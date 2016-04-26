@@ -74,33 +74,22 @@ public class FTPManager {
 		}
 	}
 
-	public void downloadFile() {
+	public void downloadFile(String remoteFileName, String localFileName) {
+		// add code in the future
+		File localFile = new File(localFileName);
+		File parentDir = localFile.getParentFile();
+		if (!parentDir.exists()) {
+			parentDir.mkdirs();
+		}
 		try {
-			boolean changedir = ftp.changeWorkingDirectory(remoteDir);
-			if (changedir) {
-				ftp.setControlEncoding("UTF-8");
-				String remoteFileName = "test.log";
-				String localFileName = "localtest.log";
-				System.out.println("filename: " + localFileName);
-				ftp.setBufferSize(1024);
-				System.out.println("buffer size is: " + ftp.getBufferSize());
-
-				OutputStream out = null;
-				File localFile = new File(localDir + localFileName);
-				out = new FileOutputStream(localFile);
-				
-				ftp.retrieveFile(remoteFileName, out);
-				System.out.println("get log done");
-				//System.out.println("delete file success? " + ftp.deleteFile(remoteFileName));
-				out.flush();
-				out.close();
-			} else {
-				System.out.println("dir does not exist!");
-			}
-		} catch (Exception e) {
+			ftp.setControlEncoding("UTF8");
+			OutputStream out = new FileOutputStream(localFileName);
+			ftp.setBufferSize(1024);
+			ftp.retrieveFile(remoteFileName, out);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
 	}
 
 	public void downloadCaseLog(Case c) throws IOException {
@@ -177,7 +166,7 @@ public class FTPManager {
 		long start = System.currentTimeMillis();
 		FTPManager ftpMgr = new FTPManager();
 		ftpMgr.connect();
-		ftpMgr.downloadFile();
+		ftpMgr.downloadFile("/sn/sps/EPAY29C/EPAY29C.sym", "nonexist/nonexist/EPAY29C.sym");
 		// ftpMgr.downloadCaseLog(c);
 		/*
 		if (f.exists()) {

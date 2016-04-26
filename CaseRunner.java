@@ -56,8 +56,7 @@ public class CaseRunner implements Runnable {
 		 * is null, add try/catch is a better idea
 		 
 		if (row > 0) {
-			Rectangle currentRowRect = caseTable.getCellRect(row, 1, true);
-			
+			Rectangle currentRowRect = caseTable.getCellRect(row, 1, true);			
 			if (currentRowRect != null) {
 				caseTable.scrollRectToVisible(currentRowRect);
 			}			
@@ -128,6 +127,7 @@ public class CaseRunner implements Runnable {
 		Thread lastProcesser = null;
 		RTDBManager rtdbManager = controller.getRTDBManager();
 		SPAManager spaManager = controller.getSPAManager();
+		PgClient pgClient = controller.getPgClient();
 		CaseTableModel caseModel = (CaseTableModel) controller.gui
 				.getCaseTable().getModel();
 
@@ -138,15 +138,14 @@ public class CaseRunner implements Runnable {
 		boolean firstCase = true;
 		int len = caseModel.getRowCount();
 		if (len == 0) {
-			controller.printLog("WARNING: No case loaded, no case run\n");
+			controller.printLog("No case loaded, no case run\n");
+			return;
 		}
 		
 		controller.printLog("+++++++++++++++++ Start to run case +++++++++++++++++\n");
 		controller.printLog("Collecting cases from GUI...\n");
 		for (int row = 0; row < len; row++) {
-			//if (!controller.isRunning()) {
 			if (controller.isStopClicked()) {
-				//controller.printLog("!!! Stop running cases !!!\n");
 				controller.setRunningFlag(false);
 				controller.setStopClicked(false);
 				break;
@@ -175,13 +174,19 @@ public class CaseRunner implements Runnable {
 				if (firstCase) {
 					rtdbManager.createInitDb();
 					Host host = controller.getHost();
-					host.changeDate("010109092033");
+					host.changeDate(XController.DEFAULT_DATE);
 					firstCase = false;
 				}
 				long startSpaTime = 0;
 				if (!firstCase || controller.getLoadDataFlag()) {
 					spaManager.stopAllSpa();
-					spaManager.loadAllSpaSql(sqlDir);
+					if (controller.useDynamicFrmbkFlag()) {
+						pgClient.closeRCtracker();
+						spaManager.loadAllSpaSql(sqlDir);
+						pgClient.openRCtracker();
+					} else {
+						spaManager.loadAllSpaSql(sqlDir);
+					}
 					startSpaTime = System.currentTimeMillis();
 					spaManager.startSpaInPool();					
 				}				
@@ -232,6 +237,10 @@ public class CaseRunner implements Runnable {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+		}
+		
+		if (controller.useDynamicFrmbkFlag()) {
+			pgClient.closeRCtracker();
 		}
 		
 		setEndTime(System.currentTimeMillis());

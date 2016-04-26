@@ -239,11 +239,12 @@ public class MainGui {
 	private JMenuItem menuExit = null;
 
 	private JMenu menuConfig = null;
-	private JMenuItem menuSetBaseDir = null;	
+	private JMenuItem menuSetBaseDir = null;
 	private JMenuItem menuHostMgr = null;
 	private JMenuItem menuMgtsMgr = null;
-	private JCheckBoxMenuItem  menuSetLoadData = null;
-	private JCheckBoxMenuItem  menuReparseLog = null;
+	private JCheckBoxMenuItem menuSetLoadData = null;
+	private JCheckBoxMenuItem menuReparseLog = null;
+	private JCheckBoxMenuItem menuUseDynamicFrmbk = null;
 	
 	private JMenu menuTools = null;
 	private JMenuItem menuLoadResult = null;
@@ -332,6 +333,7 @@ public class MainGui {
 		menuMgtsMgr = new JMenuItem("MGTS Manager...");
 		menuSetLoadData = new JCheckBoxMenuItem ("Load Data", true);
 		menuReparseLog = new JCheckBoxMenuItem ("Reparse Log", false);
+		menuUseDynamicFrmbk = new JCheckBoxMenuItem("Use Dynamic Frmbk", false);
 		
 		menuConfig.add(menuSetBaseDir);
 		menuConfig.add(menuHostMgr);
@@ -339,6 +341,7 @@ public class MainGui {
 		menuConfig.addSeparator();
 		menuConfig.add(menuSetLoadData);
 		menuConfig.add(menuReparseLog);
+		menuConfig.add(menuUseDynamicFrmbk);
 		menuBar.add(menuConfig);
 		
 		menuTools = new JMenu("Tools");
@@ -400,6 +403,16 @@ public class MainGui {
 					return;
 				}
 				setMgts();
+			}
+		});
+		
+		menuUseDynamicFrmbk.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if (controller.isRunning()) {
+					boolean oldState = !menuUseDynamicFrmbk.getState();
+					menuUseDynamicFrmbk.setState(oldState);
+					showMessageDialog("ERROR: RCtracker can't be switched on/off when case is running");
+				}
 			}
 		});
 		
@@ -1149,6 +1162,10 @@ public class MainGui {
 	
 	public boolean getReparseLogFlag() {
 		return menuReparseLog.getState();
+	}
+	
+	public boolean useDynamicFrmbkFlag() {
+		return menuUseDynamicFrmbk.getState();
 	}
 
 	/**
