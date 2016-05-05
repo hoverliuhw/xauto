@@ -1,3 +1,15 @@
+/**
+ **************************************************************************
+ * Name: StateMachineRunner
+ * 
+ * Description: Running state machine in an independent thread
+ *				finish within a max timer
+ * Author: Liu Hongwei
+ * 		   hong_wei.hl.liu@alcatel-lucent.com
+ * 
+ *************************************************************************
+ */
+ 
 import java.io.IOException;
 import java.net.SocketException;
 import java.util.Timer;

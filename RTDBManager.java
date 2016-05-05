@@ -1,3 +1,13 @@
+/**
+ **************************************************************************
+ * Name: RTDBManager
+ * 
+ * Description: Provides RTDB related operation 
+ * Author: Liu Hongwei
+ * 		   hong_wei.hl.liu@alcatel-lucent.com
+ * 
+ *************************************************************************
+ */
 import java.io.*;
 import java.util.HashSet;
 import java.util.Iterator;

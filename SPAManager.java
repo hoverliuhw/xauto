@@ -1,3 +1,13 @@
+/**
+ **************************************************************************
+ * Name: SPAManager
+ * 
+ * Description: Provides operations on SPAs 
+ * Author: Liu Hongwei
+ * 		   hong_wei.hl.liu@alcatel-lucent.com
+ * 
+ *************************************************************************
+ */
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashSet;

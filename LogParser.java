@@ -1,3 +1,14 @@
+/**
+ **************************************************************************
+ * Name: LogParser
+ * 
+ * Description: Provide functions to parse result from log file 
+ * Author: Liu Hongwei
+ * 		   hong_wei.hl.liu@alcatel-lucent.com
+ * 
+ *************************************************************************
+ */
+ 
 import java.io.*;
 import java.util.*;
 import java.util.regex.*;

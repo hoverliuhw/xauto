@@ -1,3 +1,14 @@
+/**
+ **************************************************************************
+ * Name: MgtsHostGui
+ * 
+ * Description: Derived from BaseHost, provide configuration of MGTS Client 
+ * Author: Liu Hongwei
+ * 		   hong_wei.hl.liu@alcatel-lucent.com
+ * 
+ *************************************************************************
+ */
+
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;

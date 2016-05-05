@@ -1,16 +1,22 @@
+/**
+ **************************************************************************
+ * Name: LogProcesser
+ * 
+ * Description: LogProcesser is run in another thread started by CaseRunner
+ * 				It contains three parts:
+ * 				1) Combine log which just run by CaseRunner
+ * 					this part has not been carried out yet.
+ * 				2) Download case log by FTPManager
+ * 				3) Parse log, determine the case should be PASS or FAIL, 
+ * 					and update UI accordingly 
+ * Author: Liu Hongwei
+ * 		   hong_wei.hl.liu@alcatel-lucent.com
+ * 
+ *************************************************************************
+ */
 import java.io.IOException;
 import java.net.SocketException;
 
-/**
- * LogProcesser is run in another thread started by CaseRunner
- * 
- * It contains three parts:
- * 1) Combine log which just run by CaseRunner
- * 		this part has not been carried out yet.
- * 2) Download case log by FTPManager
- * 3) Parse log, determine the case should be PASS or FAIL, 
- * 		and update UI accordingly
- */
 public class LogProcesser implements Runnable {
 	private XController controller;
 	private Host host;

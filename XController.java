@@ -1,3 +1,15 @@
+/**
+ **************************************************************************
+ * Name: XController
+ * 
+ * Description: Controller of XAuto, it is the core class, provides controll
+ *				function 
+ * Author: Liu Hongwei
+ * 		   hong_wei.hl.liu@alcatel-lucent.com
+ * 
+ *************************************************************************
+ */
+ 
 import java.io.*;
 import java.net.SocketException;
 import java.util.Timer;

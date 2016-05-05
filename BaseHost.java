@@ -1,3 +1,13 @@
+/**
+ **************************************************************************
+ * Name: BaseHost
+ * 
+ * Description: BaseHost, provide telnet, sendcmd interface 
+ * Author: Liu Hongwei
+ * 		   hong_wei.hl.liu@alcatel-lucent.com
+ * 
+ *************************************************************************
+ */
 import java.io.*;
 import java.net.SocketException;
 

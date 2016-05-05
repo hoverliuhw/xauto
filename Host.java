@@ -1,3 +1,14 @@
+/**
+ **************************************************************************
+ * Name: Host
+ * 
+ * Description: Derived from BaseHost, provide functions of an mCAS machine 
+ * Author: Liu Hongwei
+ * 		   hong_wei.hl.liu@alcatel-lucent.com
+ * 
+ *************************************************************************
+ */
+ 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;

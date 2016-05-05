@@ -1,3 +1,14 @@
+/**
+ **************************************************************************
+ * Name: MgtsHost
+ * 
+ * Description: Derived from BaseHost, provide functions of MGTS Client 
+ * Author: Liu Hongwei
+ * 		   hong_wei.hl.liu@alcatel-lucent.com
+ * 
+ *************************************************************************
+ */
+
 import java.io.IOException;
 import java.net.SocketException;
 

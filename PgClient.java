@@ -1,3 +1,14 @@
+/**
+ **************************************************************************
+ * Name: PgClient
+ * 
+ * Description: PSQL Client, provide communications with database through JDBC 
+ * Author: Liu Hongwei
+ * 		   hong_wei.hl.liu@alcatel-lucent.com
+ * 
+ *************************************************************************
+ */
+
 import java.net.SocketException;
 import java.sql.*;
 import java.io.*;
@@ -229,11 +240,19 @@ public class PgClient {
 				"$BODY$ language 'plpgsql';\n";
 		sqlCreateTableRCData = "select create_rcdata() as \"create table rcdata: \"";
 		
+		/*
 		ResultSet rs = pgStatement.executeQuery("select table_name from cat " +
 				"where table_name like 'SPA\\_%' " +
 				"and table_type='TABLE' " +
 				"and table_name not in ('SPA_PARAMS', 'SPA_PROCESS', 'SPA_TBL') " +
 				"order by table_name");
+		*/
+		ResultSet rs = pgStatement.executeQuery("SELECT item FROM RCMENUTBL " +
+				"WHERE item IN " +
+				"(SELECT table_name FROM cat WHERE table_name LIKE 'SPA\\_%' " +
+				"AND table_type='TABLE' AND table_name NOT IN ('SPA_PARAMS', 'SPA_PROCESS', 'SPA_TBL') " +
+				"ORDER BY table_name) AND title NOT LIKE 'server global static%' ORDER BY item");
+		
 		StringBuilder sb = new StringBuilder();
 		while(rs.next()) {
 			sb.append(rs.getString(1) + "\n");

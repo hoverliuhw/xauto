@@ -1,3 +1,13 @@
+/**
+ **************************************************************************
+ * Name: FTPManager
+ * 
+ * Description: Provides file download/upload interfaces 
+ * Author: Liu Hongwei
+ * 		   hong_wei.hl.liu@alcatel-lucent.com
+ * 
+ *************************************************************************
+ */
 import org.apache.commons.net.ftp.*;
 import java.io.*;
 

@@ -1,11 +1,15 @@
-import java.awt.Rectangle;
-
-import javax.swing.JTable;
-
 /**
- * CaseRunner is to get cases from GUI, and run
- * It is run in another thread started by GUI/controller(currently by GUI)
+ **************************************************************************
+ * Name: CaseRunner
+ * 
+ * Description: CaseRunner gets cases from GUI, and run in another thread 
+ * Author: Liu Hongwei
+ * 		   hong_wei.hl.liu@alcatel-lucent.com
+ * 
+ *************************************************************************
  */
+import java.awt.Rectangle;
+import javax.swing.JTable;
 
 public class CaseRunner implements Runnable {
 

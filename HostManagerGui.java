@@ -1,3 +1,14 @@
+/**
+ **************************************************************************
+ * Name: HostManagerGui
+ * 
+ * Description: Provides a UI to configure the host on which run automation cases 
+ * Author: Liu Hongwei
+ * 		   hong_wei.hl.liu@alcatel-lucent.com
+ * 
+ *************************************************************************
+ */
+ 
 import acm.gui.TableLayout;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -11,12 +22,9 @@ import java.awt.event.ActionListener;
 import java.io.*;
 import java.util.List;
 
-import org.jdom2.Attribute;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.input.SAXBuilder;
-import org.jdom2.output.Format;
-import org.jdom2.output.XMLOutputter;
 
 public class HostManagerGui {
 

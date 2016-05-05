@@ -1,3 +1,13 @@
+/**
+ **************************************************************************
+ * Name: Case
+ * 
+ * Description: Case, provide an object that contians a case's properties 
+ * Author: Liu Hongwei
+ * 		   hong_wei.hl.liu@alcatel-lucent.com
+ * 
+ *************************************************************************
+ */
 public class Case {
 
 	/**

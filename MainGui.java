@@ -1,3 +1,14 @@
+/**
+ **************************************************************************
+ * Name: MainGui
+ * 
+ * Description: Main GUI of XAuto 
+ * Author: Liu Hongwei
+ * 		   hong_wei.hl.liu@alcatel-lucent.com
+ * 
+ *************************************************************************
+ */
+ 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -311,6 +322,14 @@ public class MainGui {
 
 		mainFrame.setContentPane(mainPane);
 		mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
+		mainFrame.addComponentListener(new ComponentAdapter() {
+			public void componentResized(ComponentEvent e) {
+				mainPane.setDividerLocation((mainFrame.getWidth() * 3) / 4);
+				caseRunPane.setDividerLocation((mainFrame.getHeight() * 3) / 4);
+				infoPane.setDividerLocation((mainFrame.getHeight() * 2) / 3);
+			}
+		});
 		mainFrame.setVisible(true);
 		mainFrame.pack();
 	}
